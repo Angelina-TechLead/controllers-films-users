@@ -1,61 +1,100 @@
 package aplication.controller;
 
-import aplication.exception.ValidationException;
-import lombok.extern.slf4j.Slf4j;
+
 import aplication.model.Film;
+import aplication.model.User;
+import aplication.service.FilmService;
+import aplication.service.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
+
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/films")
-@Slf4j
 public class FilmController {
-    private final List<Film> films = new ArrayList<>();
-    private int currentId = 1;
+
+    private final FilmService filmService;
+    private final UserService userService;
+
+    @GetMapping
+    public ResponseEntity<List<Film>> getFilms() {
+        if (filmService.getAll() != null) {
+            return ResponseEntity.status(HttpStatus.OK).body(filmService.getAll());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Film> getFilmById(@PathVariable long id) {
+        var film = filmService.getById(id);
+        return ResponseEntity.status(HttpStatus.OK).body(film);
+    }
+
+    @GetMapping("/popular")
+    public ResponseEntity<List<Film>> getMostPopularFilms(@RequestParam(defaultValue = "10") int count) {
+        var films = filmService.getMostPopular(count);
+        return ResponseEntity.status(HttpStatus.OK).body(films);
+    }
 
     @PostMapping
-    public Film addFilm(@RequestBody Film film) {
-        validateFilm(film);
-        film.setId(currentId++);
-        films.add(film);
-        log.info("Добавлен фильм: {}", film);
-        return film;
+    public ResponseEntity<Film> addFilm(@Valid @RequestBody Film film) {
+        var newFilm = filmService.add(film);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newFilm);
     }
 
     @PutMapping
-    public Film updateFilm(@RequestBody Film film) {
-        validateFilm(film);
-        for (int i = 0; i < films.size(); i++) {
-            if (films.get(i).getId() == film.getId()) {
-                films.set(i, film);
-                log.info("Фильм обновлён: {}", film);
-                return film;
+    public ResponseEntity<Film> updateFilm(@Valid @RequestBody Film film) {
+        if (filmService.getById(film.getId()) != null) {
+            var updatedUser = filmService.update(film);
+            return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Film> updateFilm(@PathVariable long id, @Valid @RequestBody Film film) {
+        if (filmService.getById(film.getId()) != null) {
+            var updatedUser = filmService.update(film);
+            return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    @PutMapping("/{id}/like/{userId}")
+    public ResponseEntity<Film> addLike(@PathVariable long id, @PathVariable long userId) {
+        if (userService.getById(userId) != null){
+            if (filmService.getById(id) != null) {
+                filmService.addLike(id, userId);
+                return ResponseEntity.status(HttpStatus.OK).body(null);
+            } else {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
             }
+        }else {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
         }
-        throw new ValidationException("Фильм с ID " + film.getId() + " не найден");
     }
 
-    @GetMapping
-    public List<Film> getAllFilms() {
-        return films;
-    }
-
-    private void validateFilm(Film film) {
-        if (film.getName() == null || film.getName().isEmpty()) {
-            throw new ValidationException("Название фильма не может быть пустым");
-        }
-        if (film.getDescription() != null && film.getDescription().length() > 200) {
-            throw new ValidationException("Описание не может быть длиннее 200 символов");
-        }
-        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            throw new ValidationException("Некорректная дата релиза");
-        }
-        if (film.getDuration() <= 0) {
-            throw new ValidationException("Продолжительность должна быть положительным числом");
+    @DeleteMapping("/{id}/like/{userId}")
+    public ResponseEntity<Film> removeLike(@PathVariable long id, @PathVariable long userId) {
+        if (userService.getById(userId) != null){
+            if (filmService.getById(id) != null) {
+                filmService.removeLike(id, userId);
+                return ResponseEntity.status(HttpStatus.OK).body(null);
+            } else {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+            }
+        }else {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
         }
     }
 }
-

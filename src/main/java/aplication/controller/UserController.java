@@ -1,60 +1,91 @@
 package aplication.controller;
 
-import aplication.exception.ValidationException;
-import lombok.extern.slf4j.Slf4j;
+import aplication.exception.NotFoundException;
 import aplication.model.User;
+import aplication.service.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
+import java.sql.Array;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-@RestController
-@RequestMapping("/users")
 @Slf4j
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/users")
 public class UserController {
-    private final List<User> users = new ArrayList<>();
-    private int currentId = 1;
+
+    private final UserService userService;
+
+    @GetMapping
+    public List<User> getAll() {
+        if (userService.getAll().isEmpty()) {
+            throw new NotFoundException("Пользователи не найдены");
+        } else {
+            return userService.getAll();
+        }
+    }
+
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable long id) {
+        return userService.getById(id);
+    }
+
+    @GetMapping("/{id}/friends")
+    public Set<User> getFriends(@PathVariable long id) {
+        return userService.getFriends(id);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public List<User> getCommonFriends(@PathVariable long id, @PathVariable long otherId) {
+        return userService.getCommonFriends(id, otherId).stream()
+                .sorted(Comparator.comparing(User::getName))
+                .collect(Collectors.toList());
+    }
 
     @PostMapping
-    public User addUser(@RequestBody User user) {
-        validateUser(user);
-        user.setId((long) currentId++);
-        users.add(user);
-        log.info("Добавлен пользователь: {}", user);
-        return user;
+    public ResponseEntity<User> addUser(@Valid @RequestBody User user) {
+        var addedUser = userService.add(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(addedUser);
     }
 
     @PutMapping
-    public User updateUser(@RequestBody User user) {
-        validateUser(user);
-        for (int i = 0; i < users.size(); i++) {
-            if (users.get(i).getId() == user.getId()) {
-                users.set(i, user);
-                log.info("Пользователь обновлён: {}", user);
-                return user;
-            }
+    public ResponseEntity<User> updateUser(@Valid @RequestBody User user) {
+        if (userService.getById(user.getId()) != null) {
+            var updatedUser = userService.update(user);
+            return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
-        throw new ValidationException("Пользователь с ID " + user.getId() + " не найден");
     }
 
-    @GetMapping
-    public List<User> getAllUsers() {
-        return users;
+    @PutMapping("/{id}")
+    public void updateUser(@PathVariable long id, @Valid @RequestBody User user) {
+        if (id == user.getId()) {
+            userService.update(user);
+        }
+
+        throw new NotFoundException("Пользователь с ID " + id + " не найден");
     }
 
-    private void validateUser(User user) {
-        if (user.getEmail() == null || !user.getEmail().contains("@")) {
-            throw new ValidationException("Некорректная электронная почта");
-        }
-        if (user.getLogin() == null || user.getLogin().isEmpty() || user.getLogin().contains(" ")) {
-            throw new ValidationException("Некорректный логин");
-        }
-        if (user.getBirthday() == null || user.getBirthday().isAfter(LocalDate.now())) {
-            throw new ValidationException("Некорректная дата рождения");
-        }
-        if (user.getName() == null || user.getName().isEmpty()) {
-            user.setName(user.getLogin());
-        }
+    @PutMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<User[]> addFriend(@PathVariable long id, @PathVariable long friendId) {
+        var updatedUser = userService.addFriend(id, friendId);
+        var response = new User[]{ updatedUser };
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<User> removeFriend(@PathVariable long id, @PathVariable long friendId) {
+        userService.removeFriend(id, friendId);
+        return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 }
