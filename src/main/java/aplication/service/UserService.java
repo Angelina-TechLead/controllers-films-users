@@ -31,12 +31,8 @@ public class UserService {
 
     public User addFriend(long userId, long friendId) {
         User user = userStorage.getById(userId);
-        User friend = userStorage.getById(friendId);
         user.getFriends().add(friendId);
-        friend.getFriends().add(userId);
         userStorage.update(user);
-        userStorage.update(friend);
-
         return user;
     }
 
@@ -80,6 +76,11 @@ public class UserService {
     public Set<User> getFriends(long userId) {
         User user = userStorage.getById(userId);
         return user.getFriends().stream().map(userStorage::getById).collect(Collectors.toSet());
+    }
+
+    public User deleteUserById(Long id) {
+        if (id == null) throw new IllegalArgumentException("User id не может быть null");
+        return userStorage.deleteUserById(id);
     }
 }
 

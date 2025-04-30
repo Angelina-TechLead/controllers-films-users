@@ -6,12 +6,10 @@ import aplication.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Array;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -22,7 +20,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @RequestMapping("/users")
 public class UserController {
-
     private final UserService userService;
 
     @GetMapping
@@ -78,14 +75,23 @@ public class UserController {
 
     @PutMapping("/{id}/friends/{friendId}")
     public ResponseEntity<User[]> addFriend(@PathVariable long id, @PathVariable long friendId) {
-        var updatedUser = userService.addFriend(id, friendId);
-        var response = new User[]{ updatedUser };
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        if (userService.getById(friendId) != null) {
+            var updatedUser = userService.addFriend(id, friendId);
+            var response = new User[]{ updatedUser };
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        }
+
+        throw new NotFoundException("Пользователь с ID " + id + " не найден");
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<User> removeFriend(@PathVariable long id, @PathVariable long friendId) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeFriend(@PathVariable long id, @PathVariable long friendId) {
         userService.removeFriend(id, friendId);
-        return ResponseEntity.status(HttpStatus.OK).body(null);
+    }
+
+    @DeleteMapping("/{id}")
+    public User deleteUserById(@PathVariable Long id) {
+        return userService.deleteUserById(id);
     }
 }

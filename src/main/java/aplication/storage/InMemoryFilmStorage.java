@@ -1,9 +1,8 @@
 package aplication.storage;
 
 import aplication.exception.NotFoundException;
-import aplication.exception.ValidationException;
-import org.springframework.stereotype.Component;
 import aplication.model.Film;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +21,25 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     public void delete(long id) {
         films.removeIf(film -> film.getId() == id);
+    }
+
+    @Override
+    public Film addLike(long filmId, long userId) {
+        var film = getById(filmId);
+        film.getLikes().add(userId);
+
+        update(film);
+
+        return film;
+    }
+
+    @Override
+    public Film removeLike(long filmId, long userId) {
+        var film = getById(filmId);
+        film.getLikes().remove(userId);
+
+        update(film);
+        return film;
     }
 
     public Film update(Film film) {

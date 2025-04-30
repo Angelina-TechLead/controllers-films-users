@@ -1,19 +1,19 @@
 package aplication.service;
 
-import aplication.exception.ValidationException;
 import aplication.model.Film;
 import aplication.storage.FilmStorage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.List;
 
 @Service
 public class FilmService {
     private final FilmStorage filmStorage;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage) {
+    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage) {
         this.filmStorage = filmStorage;
     }
 
@@ -30,15 +30,11 @@ public class FilmService {
     }
 
     public Film addLike(long filmId, long userId) {
-        Film film = filmStorage.getById(filmId);
-        film.getLikes().add(userId);
-        return filmStorage.update(film);
+        return filmStorage.addLike(filmId, userId);
     }
 
     public Film removeLike(long filmId, long userId) {
-        Film film = filmStorage.getById(filmId);
-        film.getLikes().remove(userId);
-        return filmStorage.update(film);
+        return filmStorage.removeLike(filmId, userId);
     }
 
     public List<Film> getMostPopular(Integer count) {

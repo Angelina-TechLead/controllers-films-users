@@ -1,11 +1,11 @@
 package aplication.storage;
 
 import aplication.exception.NotFoundException;
-import aplication.exception.ValidationException;
 import aplication.model.User;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class InMemoryUserStorage implements UserStorage {
@@ -16,10 +16,6 @@ public class InMemoryUserStorage implements UserStorage {
         user.setId(currentId++);
         users.add(user);
         return user;
-    }
-
-    public void delete(long id) {
-        users.removeIf(user -> user.getId() == id);
     }
 
     public User update(User user) {
@@ -41,5 +37,19 @@ public class InMemoryUserStorage implements UserStorage {
                 .filter(user -> user.getId() == id)
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Пользователь с ID " + id + " не найден"));
+    }
+
+    @Override
+    public User deleteUserById(long id) {
+        User userToDelete = users.stream()
+                .filter(user -> user.getId() == id)
+                .findFirst()
+                .orElse(null);
+
+        if (userToDelete != null) {
+            users.remove(userToDelete);
+        }
+
+        return userToDelete;
     }
 }

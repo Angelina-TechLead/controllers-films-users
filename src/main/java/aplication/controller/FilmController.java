@@ -1,13 +1,12 @@
 package aplication.controller;
 
 
+import aplication.exception.NotFoundException;
 import aplication.model.Film;
-import aplication.model.User;
 import aplication.service.FilmService;
 import aplication.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +18,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-
     private final FilmService filmService;
     private final UserService userService;
 
@@ -56,7 +54,7 @@ public class FilmController {
             var updatedUser = filmService.update(film);
             return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            throw new NotFoundException("Фильм с id " + film.getId() + " не найден");
         }
     }
 

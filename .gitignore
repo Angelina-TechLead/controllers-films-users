@@ -36,3 +36,7 @@ build/
 
 ### Mac OS ###
 .DS_Store
+/db/filmorate.trace.db
+/db/filmorate.mv.db
+/db/filmorate.trace.db
+/db/filmorate.mv.db
