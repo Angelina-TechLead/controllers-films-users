@@ -1,146 +1,128 @@
 package aplication.storage.dao;
 
 import aplication.exception.NotFoundException;
+import aplication.exception.ValidationException;
 import aplication.model.User;
 import aplication.storage.UserStorage;
 
+import aplication.storage.dao.mappers.UserRowMapper;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.Types;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 @Primary
 @Component
 @Repository
 public class UserDbStorage implements UserStorage {
     public UserDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+        this.jdbc = jdbcTemplate;
     }
 
     @Override
-    public User add(User user) {
-        String sql = "INSERT INTO users (email, login, username, birthday) VALUES (?, ?, ?, ?)";
-        jdbcTemplate.update(sql, user.getEmail(), user.getLogin(), user.getName(), user.getBirthday());
-
-        String sqlGetId = "SELECT id FROM users WHERE email = ?";
-        Long id = jdbcTemplate.queryForObject(sqlGetId, Long.class, user.getEmail());
-        user.setId(id);
+    public User create(User user) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        try {
+            jdbc.update(conn -> {
+                PreparedStatement ps = conn.prepareStatement(UserRowMapper.CREATE_USER_QUERY, new String[]{"id"});
+                ps.setString(1, user.getEmail());
+                ps.setString(2, user.getLogin());
+                ps.setString(3, user.getName());
+                if (user.getBirthday() != null) {
+                    ps.setDate(4, Date.valueOf(user.getBirthday()));
+                } else {
+                    ps.setNull(4, Types.DATE);
+                }
+                return ps;
+            }, keyHolder);
+        } catch (DuplicateKeyException e) {
+            throw new ValidationException("Пользователь с таким email или логином уже существует");
+        } catch (DataIntegrityViolationException e) {
+            throw new NotFoundException("Пользователь с ID " + user.getId() + " не может быть создан");
+        }
+        user.setId(Objects.requireNonNull(keyHolder.getKey()).longValue());
         return user;
     }
 
     @Override
     @Transactional
     public User update(User user) {
-        // Обновляем основные данные пользователя
-        String sql = "UPDATE users SET email = ?, login = ?, username = ?, birthday = ? WHERE id = ?";
-        int rowsUpdated = jdbcTemplate.update(sql, user.getEmail(), user.getLogin(), user.getName(), user.getBirthday(), user.getId());
-
-        if (rowsUpdated == 0) {
-            throw new NotFoundException("Пользователь с ID " + user.getId() + " не найден");
+        try {
+            jdbc.update(UserRowMapper.UPDATE_USER_QUERY, user.getEmail(), user.getLogin(), user.getName(), user.getBirthday(), user.getId());
+        } catch (DuplicateKeyException e) {
+            throw new ValidationException("Ошибка при обновлении пользователя");
+        } catch (DataIntegrityViolationException e) {
+            throw new NotFoundException("Элемент с ID " + user.getId() + " не может быть обновлен");
         }
-
-        // Обновляем друзей пользователя
-        List<Long> existingFriends = getFriendsIds(user.getId()); // Получаем текущих друзей пользователя
-
-        // Удаляем тех друзей, которые больше не числятся у пользователя
-        for (Long friendId : existingFriends) {
-            if (!user.getFriends().contains(friendId)) {
-                removeFriend(user.getId(), friendId);
-            }
-        }
-
-        // Добавляем новых друзей
-        for (Long friendId : user.getFriends()) {
-            if (!existingFriends.contains(friendId)) {
-                addFriend(user.getId(), friendId);
-            }
-        }
-
-        return user;
+        return getById(user.getId());
     }
 
     @Override
     @Transactional
-    public User deleteUserById(long userId) {
-        var user = getById(userId);
-
-        // Удаляем записи о дружбе из таблицы friend
-        String deleteFriendsSql = "DELETE FROM friends WHERE user_id = ? OR friend_id = ?";
-        jdbcTemplate.update(deleteFriendsSql, userId, userId);
-
-        // Удаляем пользователя из таблицы users
-        String deleteUserSql = "DELETE FROM users WHERE id = ?";
-        int rowsAffected = jdbcTemplate.update(deleteUserSql, userId);
-
-        if (rowsAffected == 0) {
-            throw new NotFoundException("Пользователь с ID " + userId + " не найден");
-        }
-
+    public User delete(User user) {
+        jdbc.update(UserRowMapper.DELETE_USER_BY_ID_QUERY, user.getId());
         return user;
     }
 
     @Override
-    public User getById(long userId) {
+    public User getById(long id) {
         try {
-            // Загружаем информацию о пользователе
-            String sql = "SELECT * FROM users WHERE id = ?";
-            User user = jdbcTemplate.queryForObject(sql, userRowMapper, userId);
-
-            // Загружаем список друзей
-            String friendsSql = "SELECT friend_id FROM friends WHERE user_id = ?";
-            List<Long> friendIds = jdbcTemplate.queryForList(friendsSql, Long.class, userId);
-            user.setFriends(new HashSet<>(friendIds)); // Устанавливаем список друзей для пользователя
-
-            return user;
+            return jdbc.queryForObject(UserRowMapper.GET_USER_BY_ID_QUERY, new UserRowMapper(), id);
         } catch (EmptyResultDataAccessException e) {
-            throw new NotFoundException("Пользователь с ID " + userId + " не найден");
+            throw new NotFoundException("Пользователь с ID " + id + " не найден");
         }
     }
 
     @Override
     public List<User> getAll() {
-        String sql = "SELECT * FROM users";
-        List<User> users = jdbcTemplate.query(sql, userRowMapper);
+        return jdbc.query(UserRowMapper.GET_USERS_QUERY, new UserRowMapper());
+    }
 
-        for (User user : users) {
-            String friendsSql = "SELECT friend_id FROM friends WHERE user_id = ?";
-            List<Long> friendIds = jdbcTemplate.queryForList(friendsSql, Long.class, user.getId());
-            user.setFriends(new HashSet<>(friendIds)); // Устанавливаем друзей для пользователя
+    @Override
+    public Set<User> getFriends(long userId) {
+        return new HashSet<>(jdbc.query(UserRowMapper.GET_USER_FRIENDS, new UserRowMapper(), userId));
+    }
+
+    @Override
+    public void existsById(Long id) {
+        try {
+            jdbc.queryForObject(UserRowMapper.GET_SIMPLE_USER_QUERY, new UserRowMapper(), id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException("Пользователь с ID " + id + " не найден");
         }
-
-        return users;
     }
 
-    private final JdbcTemplate jdbcTemplate;
-
-    private final RowMapper<User> userRowMapper = (rs, rowNum) -> {
-        User user = new User();
-        user.setId(rs.getLong("id"));
-        user.setEmail(rs.getString("email"));
-        user.setLogin(rs.getString("login"));
-        user.setName(rs.getString("username")); // Изменено на корректное название столбца
-        user.setBirthday(rs.getDate("birthday").toLocalDate());
-        return user;
-    };
-
-    private List<Long> getFriendsIds(long userId) {
-        String sql = "SELECT friend_id FROM friends WHERE user_id = ?";
-        return jdbcTemplate.queryForList(sql, Long.class, userId);
+    @Override
+    public void addFriend(Long fromId, Long toId) {
+        existsById(fromId);
+        existsById(toId);
+        try {
+            jdbc.update(UserRowMapper.ADD_FRIEND_QUERY, fromId, toId);
+        } catch (DuplicateKeyException e) {
+            throw new NotFoundException("Невозможно добавить дружбу между пользователями с ID " + fromId + " и " + toId);
+        }
     }
 
-    private void addFriend(long userId, long friendId) {
-        String sql = "INSERT INTO friends (user_id, friend_id) VALUES (?, ?)";
-        jdbcTemplate.update(sql, userId, friendId);
+    @Override
+    public void removeFriend(long userId, long friendId) {
+        existsById(userId);
+        existsById(friendId);
+        jdbc.update(UserRowMapper.REMOVE_FRIEND_QUERY, userId, friendId);
     }
 
-    private void removeFriend(long userId, long friendId) {
-        String sql = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
-        jdbcTemplate.update(sql, userId, friendId);
-    }
+    private final JdbcTemplate jdbc;
 }

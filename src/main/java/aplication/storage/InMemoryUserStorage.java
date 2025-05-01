@@ -6,13 +6,14 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class InMemoryUserStorage implements UserStorage {
     private final List<User> users = new ArrayList<>();
     private long currentId = 1;
 
-    public User add(User user) {
+    public User create(User user) {
         user.setId(currentId++);
         users.add(user);
         return user;
@@ -32,6 +33,11 @@ public class InMemoryUserStorage implements UserStorage {
         return new ArrayList<>(users);
     }
 
+    @Override
+    public Set<User> getFriends(long userId) {
+        return Set.of();
+    }
+
     public User getById(long id) {
         return users.stream()
                 .filter(user -> user.getId() == id)
@@ -40,16 +46,41 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User deleteUserById(long id) {
-        User userToDelete = users.stream()
-                .filter(user -> user.getId() == id)
-                .findFirst()
-                .orElse(null);
+    public void existsById(Long id) {
+        users.stream()
+                .anyMatch(user -> user.getId() == id);
+    }
 
-        if (userToDelete != null) {
-            users.remove(userToDelete);
+    @Override
+    public void addFriend(Long fromId, Long toId) {
+        User user = getById(fromId);
+        User friend = getById(toId);
+
+        user.getFriends().add(toId);
+        friend.getFriends().add(fromId);
+
+        update(user);
+        update(friend);
+    }
+
+    @Override
+    public void removeFriend(long userId, long friendId) {
+        User user = getById(userId);
+        User friend = getById(friendId);
+
+        user.getFriends().remove(friendId);
+        friend.getFriends().remove(userId);
+
+        update(user);
+        update(friend);
+    }
+
+    @Override
+    public User delete(User user) {
+        if (user != null) {
+            users.remove(user);
         }
 
-        return userToDelete;
+        return user;
     }
 }
