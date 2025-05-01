@@ -18,7 +18,7 @@ public class FilmService {
     }
 
     public Film add(Film film) {
-        return filmStorage.add(film);
+        return filmStorage.create(film);
     }
 
     public Film update(Film film) {
@@ -37,12 +37,8 @@ public class FilmService {
         return filmStorage.removeLike(filmId, userId);
     }
 
-    public List<Film> getMostPopular(Integer count) {
-        int resultCount = (count == null || count <= 0) ? 10 : count;
-        return filmStorage.getAll().stream()
-                .sorted((f1, f2) -> Integer.compare(f2.getLikes().size(), f1.getLikes().size()))
-                .limit(resultCount)
-                .toList();
+    public List<Film> getPopular(Integer count) {
+        return filmStorage.getPopular(count);
     }
 
     public Film getById(long filmId) {

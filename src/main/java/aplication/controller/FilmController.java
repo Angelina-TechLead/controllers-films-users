@@ -38,7 +38,7 @@ public class FilmController {
 
     @GetMapping("/popular")
     public ResponseEntity<List<Film>> getMostPopularFilms(@RequestParam(defaultValue = "10") int count) {
-        var films = filmService.getMostPopular(count);
+        var films = filmService.getPopular(count);
         return ResponseEntity.status(HttpStatus.OK).body(films);
     }
 

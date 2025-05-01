@@ -13,7 +13,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     private final List<Film> films = new ArrayList<>();
     private int currentId = 1;
 
-    public Film add(Film film) {
+    public Film create(Film film) {
         film.setId(currentId++);
         films.add(film);
         return film;
@@ -56,11 +56,24 @@ public class InMemoryFilmStorage implements FilmStorage {
         return films;
     }
 
+    public List<Film> getPopular(int count) {
+        int resultCount = (count <= 0) ? 10 : count;
+        return getAll().stream()
+                .sorted((f1, f2) -> Integer.compare(f2.getLikes().size(), f1.getLikes().size()))
+                .limit(resultCount)
+                .toList();
+    }
+
     public Film getById(long id) {
         return films.stream()
                 .filter(film -> film.getId() == id)
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Фильм с ID " + id + " не найден"));
+    }
+
+    @Override
+    public void existsById(Long id) {
+
     }
 }
 

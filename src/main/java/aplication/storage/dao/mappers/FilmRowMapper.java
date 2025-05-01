@@ -19,8 +19,39 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FilmRowMapper implements RowMapper<Film> {
+    public static final String GET_FILMS_QUERY = """
+            SELECT
+                f.id AS id,
+                f.film_name AS name,
+                f.description AS description,
+                f.release_date AS release_date,
+                f.duration AS duration,
+                f.mpa_id AS rating_id,
+                r.rating_name AS rating_name,
+                ARRAY_AGG(DISTINCT l.user_id) AS likes,
+                CAST(
+                    JSON_ARRAYAGG(
+                        DISTINCT JSON_OBJECT(
+                            'id': g.id,
+                            'name': g.full_name
+                        )
+                    ) FILTER (
+                        WHERE
+                            g.id IS NOT NULL
+                    ) AS VARCHAR
+                ) AS genres
+            FROM
+                films AS f
+                LEFT JOIN likes AS l ON f.id = l.film_id
+                LEFT JOIN film_genres AS fg ON f.id = fg.film_id
+                LEFT JOIN genres AS g ON g.id = fg.genre_id
+                LEFT JOIN mpa_ratings AS r ON f.mpa_id = r.id
+            GROUP BY
+                f.id,
+                r.rating_name;
+            """;
 
-    public static String GET_POPULAR_FILMS_QUERY = """
+    public static final String GET_POPULAR_FILMS_QUERY  = """
             SELECT
                 f.id,
                 f.film_name AS name,
@@ -33,122 +64,124 @@ public class FilmRowMapper implements RowMapper<Film> {
                 CAST(
                     JSON_ARRAYAGG(
                         DISTINCT JSON_OBJECT(
-                            'id' : g.id,
-                            'name' : g.full_name
+                            'id': g.id,
+                            'name': g.full_name
                         )
-                    ) FILTER (WHERE g.id IS NOT NULL) AS VARCHAR
+                    ) FILTER (
+                        WHERE
+                            g.id IS NOT NULL
+                    ) AS VARCHAR
                 ) AS genres
-            FROM films AS f
+            FROM
+                films AS f
+                LEFT JOIN likes AS l ON f.id = l.film_id
+                LEFT JOIN film_genres AS fg ON f.id = fg.film_id
+                LEFT JOIN genres AS g ON g.id = fg.genre_id
+                LEFT JOIN mpa_ratings AS r ON f.mpa_id = r.id
+            GROUP BY
+                f.id
+            ORDER BY
+                COUNT(DISTINCT l.user_id) DESC
+            LIMIT
+                ?;
+    """;
+
+    public static final String DELETE_FILM_BY_ID_QUERY  = """
+        DELETE FROM
+            films
+        WHERE
+            id = ?;
+    """;
+
+    public static final String GET_SIMPLE_FILM_QUERY = """
+        SELECT
+            f.id AS id,
+            f.film_name AS name,
+            f.description AS description,
+            f.release_date AS release_date,
+            f.duration AS duration,
+            NULL AS rating_id,
+            NULL AS rating_name,
+            NULL AS likes,
+            NULL AS genres
+        FROM
+            films AS f
+        WHERE
+            f.id = ?;
+    """;
+
+    public static final String GET_FILM_BY_ID_QUERY  = """
+        SELECT
+            f.id,
+            f.film_name AS name,
+            f.description,
+            f.release_date,
+            f.duration,
+            f.mpa_id AS rating_id,
+            r.rating_name,
+            ARRAY_AGG(DISTINCT l.user_id) AS likes,
+            CAST(
+                JSON_ARRAYAGG(
+                    DISTINCT JSON_OBJECT(
+                        'id': g.id,
+                        'name': g.full_name
+                    )
+                ) FILTER (
+                    WHERE
+                        g.id IS NOT NULL
+                ) AS VARCHAR
+            ) AS genres
+        FROM
+            films AS f
             LEFT JOIN likes AS l ON f.id = l.film_id
             LEFT JOIN film_genres AS fg ON f.id = fg.film_id
             LEFT JOIN genres AS g ON g.id = fg.genre_id
-            LEFT JOIN ratings AS r ON f.mpa_id = r.id
-            GROUP BY f.id
-            ORDER BY COUNT(DISTINCT l.user_id) DESC
-            LIMIT ?;
-            """;
+            LEFT JOIN mpa_ratings AS r ON f.mpa_id= r.id
+        WHERE
+            f.id = ?
+        GROUP BY
+            f.id;
+    """;
 
-    public static String GET_FILMS_QUERY = """
-            SELECT
-                f.id AS id,
-                f.film_name AS name,
-                f.description AS description,
-                f.release_date AS release_date,
-                f.duration AS duration,
-                f.rating_id AS rating_id,
-                r.rating_name AS rating_name,
-                ARRAY_AGG(DISTINCT l.user_id) AS likes,
-                CAST(
-                    JSON_ARRAYAGG(
-                        DISTINCT JSON_OBJECT(
-                            'id' : g.id,
-                            'name' : g.full_name
-                        )
-                    ) FILTER (WHERE g.genre_id IS NOT NULL) AS VARCHAR
-                ) AS genres
-            FROM films AS f
-            LEFT JOIN likes AS l ON f.film_id = l.film_id
-            LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
-            LEFT JOIN genres AS g ON g.genre_id = fg.genre_id
-            LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
-            GROUP BY f.film_id;
-            """;
+    public static final String CREATE_FILM_QUERY  = """
+        INSERT INTO
+            films (
+                film_name,
+                description,
+                release_date,
+                duration,
+                mpa_id
+            )
+        VALUES
+            (?, ?, ?, ?, ?);
+    """;
 
-    public static String GET_FILM_BY_ID_QUERY = """
-            SELECT
-                f.film_id AS id,
-                f.name AS name,
-                f.description AS description,
-                f.release_date AS release_date,
-                f.duration AS duration,
-                f.rating_id AS rating_id,
-                r.name AS rating_name,
-                ARRAY_AGG(DISTINCT l.user_id) AS likes,
-                CAST(
-                    JSON_ARRAYAGG(
-                        DISTINCT JSON_OBJECT(
-                            'id' : g.genre_id,
-                            'name' : g.name
-                        )
-                    ) FILTER (WHERE g.genre_id IS NOT NULL) AS VARCHAR
-                ) AS genres
-            FROM films AS f
-            LEFT JOIN likes AS l ON f.film_id = l.film_id
-            LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
-            LEFT JOIN genres AS g ON g.genre_id = fg.genre_id
-            LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
-            WHERE f.film_id = ?
-            GROUP BY f.film_id;
-            """;
+    public static final String ADD_FILM_GENRE_QUERY  = """
+        INSERT INTO
+            film_genres (film_id, genre_id)
+        VALUES
+            (?, ?);
+    """;
 
-    public static String GET_SIMPLE_FILM_QUERY = """
-            SELECT
-                f.film_id AS id,
-                f.name AS name,
-                f.description AS description,
-                f.release_date AS release_date,
-                f.duration AS duration,
-                NULL AS rating_id,
-                NULL AS rating_name,
-                NULL AS likes,
-                NULL AS genres
-            FROM films AS f
-            WHERE f.film_id = ?;
-            """;
+    public static final String UPDATE_FILM_QUERY  = """
+        UPDATE
+            films
+        SET
+            film_name = ?,
+            description = ?,
+            release_date = ?,
+            duration = ?,
+            mpa_id = ?
+        WHERE
+            id = ?;
+    """;
 
-    public static String DELETE_FILM_BY_ID_QUERY = """
-            DELETE FROM films
-            WHERE film_id = ?;
-            """;
-
-    public static String CREATE_FILM_QUERY = """
-            INSERT INTO films (name, description, release_date, duration, rating_id)
-            VALUES (?, ?, ?, ?, ?);
-            """;
-
-    public static String UPDATE_FILM_QUERY = """
-            UPDATE films
-            SET name = ?, description = ?, release_date = ?, duration = ?, rating_id = ?
-            WHERE film_id = ?;
-            """;
-
-    public static String ADD_FILM_GENRE_QUERY = """
-            INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?);
-            """;
-
-    public static String REMOVE_FILM_GENRES_QUERY = """
-            DELETE FROM film_genres WHERE film_id = ?;
-            """;
-
-    public static String ADD_LIKE_QUERY = """
-            INSERT INTO likes (film_id, user_id)
-            VALUES (?, ?);
-            """;
-
-    public static String REMOVE_LIKE_QUERY = """
-            DELETE FROM likes
-            WHERE film_id = ? AND user_id = ?;
-            """;
+    public static final String REMOVE_FILM_GENRES_QUERY  = """
+        DELETE FROM
+            film_genres
+        WHERE
+            film_id = ?;
+    """;
 
     @Override
     public Film mapRow(ResultSet rs, int rowNum) throws SQLException {
