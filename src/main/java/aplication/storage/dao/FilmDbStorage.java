@@ -5,6 +5,7 @@ import aplication.exception.ValidationException;
 import aplication.model.Film;
 import aplication.storage.FilmStorage;
 import aplication.storage.dao.mappers.FilmRowMapper;
+import aplication.storage.dao.mappers.LikeRowMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -109,26 +110,12 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public void addLike(long filmId, long userId) {
-        // SQL-запрос для добавления лайка
-        String sql = "INSERT INTO likes (film_id, user_id) VALUES (?, ?)";
-
-        // Выполняем вставку лайка
-        jdbc.update(sql, filmId, userId);
-
-        // Возвращаем обновлённый объект фильма
-        getById(filmId);
+        jdbc.update(LikeRowMapper.ADD_QUERY, filmId, userId);
     }
 
     @Override
     public void removeLike(long filmId, long userId) {
-        // SQL-запрос для удаления лайка
-        String sql = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
-
-        // Выполняем удаление лайка
-        jdbc.update(sql, filmId, userId);
-
-        // Возвращаем обновлённый объект фильма
-        getById(filmId);
+        jdbc.update(LikeRowMapper.DELETE_QUERY, filmId, userId);
     }
 
     @Override
