@@ -224,7 +224,6 @@ public class FilmRowMapper implements RowMapper<Film> {
         return film;
     }
 
-
     private Set<Long> makeLongSet(java.sql.Array sqlArray) throws SQLException {
         if (sqlArray == null) return new HashSet<>();
         Object[] objectArray = (Object[]) sqlArray.getArray();

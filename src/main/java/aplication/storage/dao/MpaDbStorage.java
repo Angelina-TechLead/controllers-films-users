@@ -15,14 +15,16 @@ import java.util.List;
 @Component
 @Repository
 public class MpaDbStorage {
+    private final JdbcTemplate jdbc;
+
     public MpaDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+        this.jdbc = jdbcTemplate;
     }
 
     public List<Mpa> getAll() {
         String sql = "SELECT * FROM mpa_ratings ORDER BY id ASC";
         try {
-            return jdbcTemplate.query(sql, mpaRowMapper);
+            return jdbc.query(sql, mpaRowMapper);
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException("Рейтинги MPA не найдены");
         }
@@ -31,13 +33,11 @@ public class MpaDbStorage {
     public Mpa getById(int id) {
         String sql = "SELECT * FROM mpa_ratings WHERE id = ?";
         try {
-            return jdbcTemplate.queryForObject(sql, mpaRowMapper, id);
+            return jdbc.queryForObject(sql, mpaRowMapper, id);
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException("Рейтинг MPA с ID " + id + " не найден");
         }
     }
-
-    private final JdbcTemplate jdbcTemplate;
 
     private final RowMapper<Mpa> mpaRowMapper = (rs, rowNum) -> {
         Mpa mpa = new Mpa();

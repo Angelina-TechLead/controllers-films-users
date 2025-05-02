@@ -128,7 +128,6 @@ public class UserRowMapper implements RowMapper<User> {
         return user;
     }
 
-
     private Set<Long> makeLongSet(java.sql.Array sqlArray) throws SQLException {
         if (sqlArray == null) return new HashSet<>();
         Object[] objectArray = (Object[]) sqlArray.getArray();

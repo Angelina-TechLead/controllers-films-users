@@ -29,6 +29,8 @@ import java.util.Set;
 @Component
 @Repository
 public class UserDbStorage implements UserStorage {
+    private final JdbcTemplate jdbc;
+
     public UserDbStorage(JdbcTemplate jdbcTemplate) {
         this.jdbc = jdbcTemplate;
     }
@@ -123,6 +125,4 @@ public class UserDbStorage implements UserStorage {
         existsById(friendId);
         jdbc.update(UserRowMapper.REMOVE_FRIEND_QUERY, userId, friendId);
     }
-
-    private final JdbcTemplate jdbc;
 }

@@ -50,23 +50,16 @@ public class FilmController {
 
     @PutMapping
     public ResponseEntity<Film> updateFilm(@Valid @RequestBody Film film) {
-        if (filmService.getById(film.getId()) != null) {
-            var updatedUser = filmService.update(film);
-            return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
-        } else {
-            throw new NotFoundException("Фильм с id " + film.getId() + " не найден");
-        }
+        var updatedUser = filmService.update(film);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Film> updateFilm(@PathVariable long id, @Valid @RequestBody Film film) {
-        if (filmService.getById(film.getId()) != null) {
-            var updatedUser = filmService.update(film);
-            return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+        var updatedFilm = filmService.update(film);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedFilm);
     }
+
 
     @PutMapping("/{id}/like/{userId}")
     public ResponseEntity<Film> addLike(@PathVariable long id, @PathVariable long userId) {

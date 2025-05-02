@@ -15,14 +15,23 @@ import java.util.List;
 @Component
 @Repository
 public class GenreDbStorage {
+    private final JdbcTemplate jdbc;
+
+    private final RowMapper<Genre> genreRowMapper = (rs, rowNum) -> {
+        Genre genre = new Genre();
+        genre.setId(rs.getInt("id"));
+        genre.setName(rs.getString("full_name"));
+        return genre;
+    };
+
     public GenreDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+        this.jdbc = jdbcTemplate;
     }
 
     public List<Genre> getAll() {
         String sql = "SELECT * FROM genres ORDER BY id ASC";
         try {
-            return jdbcTemplate.query(sql, genreRowMapper);
+            return jdbc.query(sql, genreRowMapper);
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException("Жанры не найдены");
         }
@@ -31,18 +40,9 @@ public class GenreDbStorage {
     public Genre getById(int id) {
         String sql = "SELECT * FROM genres WHERE id = ?";
         try {
-            return jdbcTemplate.queryForObject(sql, genreRowMapper, id);
+            return jdbc.queryForObject(sql, genreRowMapper, id);
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException("Жанр с ID " + id + " не найден");
         }
     }
-
-    private final JdbcTemplate jdbcTemplate;
-
-    private final RowMapper<Genre> genreRowMapper = (rs, rowNum) -> {
-        Genre genre = new Genre();
-        genre.setId(rs.getInt("id"));
-        genre.setName(rs.getString("full_name"));
-        return genre;
-    };
 }

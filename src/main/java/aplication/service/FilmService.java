@@ -1,5 +1,6 @@
 package aplication.service;
 
+import aplication.exception.NotFoundException;
 import aplication.model.Film;
 import aplication.storage.FilmStorage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class FilmService {
     }
 
     public Film update(Film film) {
+        if (getById(film.getId()) == null) {
+            throw new NotFoundException("Фильм с id " + film.getId() + " не найден");
+        }
         return filmStorage.update(film);
     }
 
@@ -29,12 +33,12 @@ public class FilmService {
         filmStorage.delete(filmId);
     }
 
-    public Film addLike(long filmId, long userId) {
-        return filmStorage.addLike(filmId, userId);
+    public void addLike(long filmId, long userId) {
+        filmStorage.addLike(filmId, userId);
     }
 
-    public Film removeLike(long filmId, long userId) {
-        return filmStorage.removeLike(filmId, userId);
+    public void removeLike(long filmId, long userId) {
+        filmStorage.removeLike(filmId, userId);
     }
 
     public List<Film> getPopular(Integer count) {

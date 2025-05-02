@@ -48,7 +48,7 @@ public class UserService {
         var commonFriendsIds = user.getFriends().stream()
                 .filter(friend.getFriends()::contains)
                 .collect(Collectors.toSet());
-        if (commonFriendsIds != null && commonFriendsIds.size() > 0) {
+        if (!commonFriendsIds.isEmpty()) {
             return commonFriendsIds.stream()
                     .map(userStorage::getById)
                     .collect(Collectors.toSet());

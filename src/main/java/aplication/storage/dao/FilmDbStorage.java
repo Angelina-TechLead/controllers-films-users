@@ -3,7 +3,6 @@ package aplication.storage.dao;
 import aplication.exception.NotFoundException;
 import aplication.exception.ValidationException;
 import aplication.model.Film;
-import aplication.model.Genre;
 import aplication.storage.FilmStorage;
 import aplication.storage.dao.mappers.FilmRowMapper;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +26,8 @@ import java.util.*;
 @Repository
 @RequiredArgsConstructor
 public class FilmDbStorage implements FilmStorage {
+    private final JdbcTemplate jdbc;
+
     @Override
     public Film create(Film film) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -63,9 +64,11 @@ public class FilmDbStorage implements FilmStorage {
         }
         film.setId(Objects.requireNonNull(keyHolder.getKey()).longValue());
         try {
-            for (Genre genre : film.getGenres()) {
-                jdbc.update(FilmRowMapper.ADD_FILM_GENRE_QUERY, film.getId(), genre.getId());
-            }
+            jdbc.batchUpdate(FilmRowMapper.ADD_FILM_GENRE_QUERY, film.getGenres(), film.getGenres().size(),
+                (ps, genre) -> {
+                    ps.setLong(1, film.getId());
+                    ps.setInt(2, genre.getId());
+                });
         } catch (DataIntegrityViolationException e) {
             throw new NotFoundException("Жанры не найдены");
         }
@@ -88,9 +91,11 @@ public class FilmDbStorage implements FilmStorage {
         }
         try {
             jdbc.update(FilmRowMapper.REMOVE_FILM_GENRES_QUERY, film.getId());
-            for (Genre genre : film.getGenres()) {
-                jdbc.update(FilmRowMapper.ADD_FILM_GENRE_QUERY, film.getId(), genre.getId());
-            }
+            jdbc.batchUpdate(FilmRowMapper.ADD_FILM_GENRE_QUERY, film.getGenres(), film.getGenres().size(),
+                (ps, genre) -> {
+                    ps.setLong(1, film.getId());
+                    ps.setInt(2, genre.getId());
+                });
         } catch (DataIntegrityViolationException e) {
             throw new NotFoundException("Не обновить жанры");
         }
@@ -103,7 +108,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public Film addLike(long filmId, long userId) {
+    public void addLike(long filmId, long userId) {
         // SQL-запрос для добавления лайка
         String sql = "INSERT INTO likes (film_id, user_id) VALUES (?, ?)";
 
@@ -111,11 +116,11 @@ public class FilmDbStorage implements FilmStorage {
         jdbc.update(sql, filmId, userId);
 
         // Возвращаем обновлённый объект фильма
-        return getById(filmId); // Метод getById загружает фильм из базы данных вместе с лайками и жанрами
+        getById(filmId);
     }
 
     @Override
-    public Film removeLike(long filmId, long userId) {
+    public void removeLike(long filmId, long userId) {
         // SQL-запрос для удаления лайка
         String sql = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
 
@@ -123,7 +128,7 @@ public class FilmDbStorage implements FilmStorage {
         jdbc.update(sql, filmId, userId);
 
         // Возвращаем обновлённый объект фильма
-        return getById(filmId); // Метод getById загружает фильм из базы данных вместе с лайками и жанрами
+        getById(filmId);
     }
 
     @Override
@@ -153,27 +158,5 @@ public class FilmDbStorage implements FilmStorage {
     public List<Film> getPopular(int count) {
         var resultCount = (count <= 0) ? 10 : count;
         return jdbc.query(FilmRowMapper.GET_POPULAR_FILMS_QUERY, new FilmRowMapper(), resultCount);
-    }
-
-    private final JdbcTemplate jdbc;
-
-    // Приватный метод для добавления жанров
-    private void addGenres(Film film) {
-        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
-            String sql = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
-            for (Genre genre : film.getGenres()) {
-                jdbc.update(sql, film.getId(), genre.getId());
-            }
-        }
-    }
-
-    // Приватный метод для обновления жанров
-    private void updateGenres(Film film) {
-        // Удаляем старые жанры
-        String deleteSql = "DELETE FROM film_genres WHERE film_id = ?";
-        jdbc.update(deleteSql, film.getId());
-
-        // Добавляем новые жанры
-        addGenres(film);
     }
 }

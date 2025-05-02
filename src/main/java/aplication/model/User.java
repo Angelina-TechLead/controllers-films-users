@@ -17,7 +17,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {
-    private long id;
+    private Long id;
 
     @NotBlank(message = "@Valid: Film name shouldn't be blank")
     @Email
