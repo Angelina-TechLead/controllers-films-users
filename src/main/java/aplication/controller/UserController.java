@@ -6,13 +6,12 @@ import aplication.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Array;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,16 +21,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @RequestMapping("/users")
 public class UserController {
-
     private final UserService userService;
 
     @GetMapping
     public List<User> getAll() {
-        if (userService.getAll().isEmpty()) {
-            throw new NotFoundException("Пользователи не найдены");
-        } else {
-            return userService.getAll();
-        }
+        return userService.getAll();
     }
 
     @GetMapping("/{id}")
@@ -45,47 +39,42 @@ public class UserController {
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public List<User> getCommonFriends(@PathVariable long id, @PathVariable long otherId) {
+    public Set<User> getCommonFriends(@PathVariable long id, @PathVariable long otherId) {
         return userService.getCommonFriends(id, otherId).stream()
                 .sorted(Comparator.comparing(User::getName))
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @PostMapping
     public ResponseEntity<User> addUser(@Valid @RequestBody User user) {
-        var addedUser = userService.add(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(addedUser);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.add(user));
     }
 
     @PutMapping
-    public ResponseEntity<User> updateUser(@Valid @RequestBody User user) {
-        if (userService.getById(user.getId()) != null) {
-            var updatedUser = userService.update(user);
-            return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+    public User updateUser(@Valid @RequestBody User user) {
+        return userService.update(user);
     }
 
     @PutMapping("/{id}")
-    public void updateUser(@PathVariable long id, @Valid @RequestBody User user) {
-        if (id == user.getId()) {
-            userService.update(user);
-        }
-
-        throw new NotFoundException("Пользователь с ID " + id + " не найден");
+    public User updateUser(@PathVariable long id, @Valid @RequestBody User user) {
+        return userService.update(user);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<User[]> addFriend(@PathVariable long id, @PathVariable long friendId) {
-        var updatedUser = userService.addFriend(id, friendId);
-        var response = new User[]{ updatedUser };
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+    public User[] addFriend(@PathVariable long id, @PathVariable long friendId) {
+        userService.addFriend(id, friendId);
+        var user = userService.getById(id);
+        return new User[]{ user };
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<User> removeFriend(@PathVariable long id, @PathVariable long friendId) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeFriend(@PathVariable long id, @PathVariable long friendId) {
         userService.removeFriend(id, friendId);
-        return ResponseEntity.status(HttpStatus.OK).body(null);
+    }
+
+    @DeleteMapping("/{id}")
+    public User deleteUserById(@PathVariable Long id) {
+        return userService.deleteUserById(id);
     }
 }

@@ -1,5 +1,6 @@
 package aplication.service;
 
+import aplication.exception.NotFoundException;
 import aplication.model.User;
 import aplication.storage.UserStorage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,44 +19,27 @@ public class UserService {
     }
 
     public List<User> getAll() {
-        if (userStorage.getAll() != null) {
-            return userStorage.getAll();
+        if (userStorage.getAll().isEmpty()) {
+            throw new NotFoundException("Пользователи не найдены");
         } else {
-            return new ArrayList<>();
+            return userStorage.getAll();
         }
     }
 
     public User add(User user) {
-        return userStorage.add(user);
+        return userStorage.create(user);
     }
 
-    public User addFriend(long userId, long friendId) {
-        User user = userStorage.getById(userId);
-        User friend = userStorage.getById(friendId);
-        user.getFriends().add(friendId);
-        friend.getFriends().add(userId);
-        userStorage.update(user);
-        userStorage.update(friend);
-
-        return user;
+    public void addFriend(long userId, long friendId) {
+        userStorage.addFriend(userId, friendId);
     }
 
-    public User update(User user) {
-        if (userStorage.getById(user.getId()) != null) {
-            userStorage.update(user);
-            return user;
-        } else {
-            return null;
-        }
+    public User update(User u) {
+        return userStorage.update(u);
     }
 
     public void removeFriend(long userId, long friendId) {
-        User user = userStorage.getById(userId);
-        User friend = userStorage.getById(friendId);
-        user.getFriends().remove(friendId);
-        friend.getFriends().remove(userId);
-        userStorage.update(user);
-        userStorage.update(friend);
+      userStorage.removeFriend(userId, friendId);
     }
 
     public Set<User> getCommonFriends(long userId, long friendId) {
@@ -64,7 +48,7 @@ public class UserService {
         var commonFriendsIds = user.getFriends().stream()
                 .filter(friend.getFriends()::contains)
                 .collect(Collectors.toSet());
-        if (commonFriendsIds != null && commonFriendsIds.size() > 0) {
+        if (!commonFriendsIds.isEmpty()) {
             return commonFriendsIds.stream()
                     .map(userStorage::getById)
                     .collect(Collectors.toSet());
@@ -74,12 +58,29 @@ public class UserService {
     }
 
     public User getById(long userId) {
-        return userStorage.getById(userId);
+        var user = userStorage.getById(userId);
+
+        if (user == null) {
+            throw new NotFoundException("Пользователь не найдены");
+        } else {
+            return user;
+        }
     }
 
     public Set<User> getFriends(long userId) {
-        User user = userStorage.getById(userId);
-        return user.getFriends().stream().map(userStorage::getById).collect(Collectors.toSet());
+        var user = userStorage.getById(userId);
+
+        if (user == null) {
+            throw new NotFoundException("Пользователь не найдены");
+        } else {
+            return userStorage.getFriends(userId);
+        }
+    }
+
+    public User deleteUserById(Long id) {
+        if (id == null) throw new IllegalArgumentException("User id не может быть null");
+        var user = getById(id);
+        return userStorage.delete(user);
     }
 }
 

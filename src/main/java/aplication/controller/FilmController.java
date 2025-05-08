@@ -1,13 +1,12 @@
 package aplication.controller;
 
 
+import aplication.exception.NotFoundException;
 import aplication.model.Film;
-import aplication.model.User;
 import aplication.service.FilmService;
 import aplication.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +18,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-
     private final FilmService filmService;
     private final UserService userService;
 
@@ -40,7 +38,7 @@ public class FilmController {
 
     @GetMapping("/popular")
     public ResponseEntity<List<Film>> getMostPopularFilms(@RequestParam(defaultValue = "10") int count) {
-        var films = filmService.getMostPopular(count);
+        var films = filmService.getPopular(count);
         return ResponseEntity.status(HttpStatus.OK).body(films);
     }
 
@@ -52,23 +50,16 @@ public class FilmController {
 
     @PutMapping
     public ResponseEntity<Film> updateFilm(@Valid @RequestBody Film film) {
-        if (filmService.getById(film.getId()) != null) {
-            var updatedUser = filmService.update(film);
-            return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+        var updatedUser = filmService.update(film);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Film> updateFilm(@PathVariable long id, @Valid @RequestBody Film film) {
-        if (filmService.getById(film.getId()) != null) {
-            var updatedUser = filmService.update(film);
-            return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+        var updatedFilm = filmService.update(film);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedFilm);
     }
+
 
     @PutMapping("/{id}/like/{userId}")
     public ResponseEntity<Film> addLike(@PathVariable long id, @PathVariable long userId) {

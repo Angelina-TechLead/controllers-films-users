@@ -1,27 +1,31 @@
 package aplication.service;
 
-import aplication.exception.ValidationException;
+import aplication.exception.NotFoundException;
 import aplication.model.Film;
 import aplication.storage.FilmStorage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.List;
 
 @Service
 public class FilmService {
     private final FilmStorage filmStorage;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage) {
+    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage) {
         this.filmStorage = filmStorage;
     }
 
     public Film add(Film film) {
-        return filmStorage.add(film);
+        return filmStorage.create(film);
     }
 
     public Film update(Film film) {
+        if (getById(film.getId()) == null) {
+            throw new NotFoundException("Фильм с id " + film.getId() + " не найден");
+        }
         return filmStorage.update(film);
     }
 
@@ -29,24 +33,16 @@ public class FilmService {
         filmStorage.delete(filmId);
     }
 
-    public Film addLike(long filmId, long userId) {
-        Film film = filmStorage.getById(filmId);
-        film.getLikes().add(userId);
-        return filmStorage.update(film);
+    public void addLike(long filmId, long userId) {
+        filmStorage.addLike(filmId, userId);
     }
 
-    public Film removeLike(long filmId, long userId) {
-        Film film = filmStorage.getById(filmId);
-        film.getLikes().remove(userId);
-        return filmStorage.update(film);
+    public void removeLike(long filmId, long userId) {
+        filmStorage.removeLike(filmId, userId);
     }
 
-    public List<Film> getMostPopular(Integer count) {
-        int resultCount = (count == null || count <= 0) ? 10 : count;
-        return filmStorage.getAll().stream()
-                .sorted((f1, f2) -> Integer.compare(f2.getLikes().size(), f1.getLikes().size()))
-                .limit(resultCount)
-                .toList();
+    public List<Film> getPopular(Integer count) {
+        return filmStorage.getPopular(count);
     }
 
     public Film getById(long filmId) {
