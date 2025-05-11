@@ -183,11 +183,11 @@ public class FilmRowMapper implements RowMapper<Film> {
     """;
 
     public static final String ADD_FILM_DIRECTOR_QUERY = """
-            INSERT INTO
-                film_directors (film_id, director_id)
-            VALUES
-                (?, ?)
-            """;
+        INSERT INTO
+            film_directors (film_id, director_id)
+        VALUES
+            (?, ?)
+        """;
 
     public static final String REMOVE_FILM_DIRECTORS_QUERY  = """
         DELETE FROM
@@ -232,7 +232,6 @@ public class FilmRowMapper implements RowMapper<Film> {
             } catch (JsonProcessingException e) {
                 // do nothing
             }
-
         }
         return film;
     }
