@@ -18,6 +18,11 @@
     <show-object-properties value="false" />
     <loaded-nodes />
   </component>
+  <component name="DBNavigator.Project.DatabaseConsoleManager">
+    <connection id="80514322-bfe5-4dd0-a3ca-5092730ed2e2">
+      <console name="NAS" type="STANDARD" schema="catsgram" session="Main" />
+    </connection>
+  </component>
   <component name="DBNavigator.Project.DatabaseEditorStateManager">
     <last-used-providers />
   </component>
