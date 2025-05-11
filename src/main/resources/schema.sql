@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS films (
     description VARCHAR(200) NOT NULL,
     release_date DATE NOT NULL,
     duration DECIMAL NOT NULL,
-    mpa_id INT REFERENCES mpa_ratings (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+    mpa_id INT REFERENCES mpa_ratings (id) ON DELETE RESTRICT ON UPDATE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS directors (
