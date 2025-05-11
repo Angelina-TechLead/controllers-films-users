@@ -42,10 +42,6 @@ public class FilmService {
         filmStorage.removeLike(filmId, userId);
     }
 
-    public List<Film> getPopular(Integer count) {
-        return filmStorage.getPopular(count);
-    }
-
     public Film getById(long filmId) {
         return filmStorage.getById(filmId);
     }
