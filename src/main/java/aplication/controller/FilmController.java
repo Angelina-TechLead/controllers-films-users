@@ -1,7 +1,11 @@
 package aplication.controller;
 
 import aplication.model.Film;
+import aplication.model.UserEvent;
+import aplication.model.UserEvent.EventType;
+import aplication.model.UserEvent.OperationType;
 import aplication.service.FilmService;
+import aplication.service.UserEventService;
 import aplication.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +23,7 @@ import java.util.Map;
 public class FilmController {
     private final FilmService filmService;
     private final UserService userService;
+    private final UserEventService userEventService;
 
     @GetMapping
     public ResponseEntity<List<Film>> getFilms() {
@@ -67,6 +72,15 @@ public class FilmController {
         if (userService.getById(userId) != null) {
             if (filmService.getById(id) != null) {
                 filmService.addLike(id, userId);
+
+                UserEvent event = new UserEvent();
+                event.setUserId(userId);
+                event.setEventType(EventType.LIKE);
+                event.setOperation(OperationType.ADD);
+                event.setEntityId(id);
+                event.setTimestamp(System.currentTimeMillis());
+                userEventService.create(event);
+
                 return ResponseEntity.status(HttpStatus.OK).body(null);
             } else {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
@@ -81,6 +95,15 @@ public class FilmController {
         if (userService.getById(userId) != null) {
             if (filmService.getById(id) != null) {
                 filmService.removeLike(id, userId);
+
+                UserEvent event = new UserEvent();
+                event.setUserId(userId);
+                event.setEventType(EventType.LIKE);
+                event.setOperation(OperationType.REMOVE);
+                event.setEntityId(id);
+                event.setTimestamp(System.currentTimeMillis());
+                userEventService.create(event);
+            
                 return ResponseEntity.status(HttpStatus.OK).body(null);
             } else {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);

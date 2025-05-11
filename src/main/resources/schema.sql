@@ -66,3 +66,27 @@ CREATE TABLE IF NOT EXISTS likes (
     film_id BIGINT REFERENCES films(id) ON DELETE CASCADE ON UPDATE RESTRICT,
     CONSTRAINT likes_pk PRIMARY KEY (user_id, film_id)
 );
+
+-- Таблица событий
+DO
+' 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = ''event_type_enum'') THEN
+        CREATE TYPE event_type_enum AS ENUM (''LIKE'', ''REVIEW'', ''FRIEND'');
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = ''operation_type_enum'') THEN
+        CREATE TYPE operation_type_enum AS ENUM (''ADD'', ''REMOVE'', ''UPDATE'');
+    END IF;
+END
+';
+
+CREATE TABLE IF NOT EXISTS user_events (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    event_type event_type_enum NOT NULL,
+    operation operation_type_enum NOT NULL,
+    entity_id BIGINT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id)
+);
