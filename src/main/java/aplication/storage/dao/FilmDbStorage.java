@@ -6,12 +6,14 @@ import aplication.model.Film;
 import aplication.storage.FilmStorage;
 import aplication.storage.dao.mappers.FilmRowMapper;
 import aplication.storage.dao.mappers.LikeRowMapper;
+import aplication.storage.dao.queries.FilmQueryBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
@@ -28,13 +30,14 @@ import java.util.*;
 @RequiredArgsConstructor
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbc;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     @Override
     public Film create(Film film) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         try {
             jdbc.update(conn -> {
-                PreparedStatement ps = conn.prepareStatement(FilmRowMapper.CREATE_FILM_QUERY, new String[]{"id"});
+                PreparedStatement ps = conn.prepareStatement(FilmRowMapper.CREATE_FILM_QUERY, new String[] { "id" });
                 ps.setString(1, film.getName());
                 ps.setString(2, film.getDescription());
 
@@ -66,10 +69,10 @@ public class FilmDbStorage implements FilmStorage {
         film.setId(Objects.requireNonNull(keyHolder.getKey()).longValue());
         try {
             jdbc.batchUpdate(FilmRowMapper.ADD_FILM_GENRE_QUERY, film.getGenres(), film.getGenres().size(),
-                (ps, genre) -> {
-                    ps.setLong(1, film.getId());
-                    ps.setInt(2, genre.getId());
-                });
+                    (ps, genre) -> {
+                        ps.setLong(1, film.getId());
+                        ps.setInt(2, genre.getId());
+                    });
         } catch (DataIntegrityViolationException e) {
             throw new NotFoundException("Жанры не найдены");
         }
@@ -93,14 +96,14 @@ public class FilmDbStorage implements FilmStorage {
         try {
             jdbc.update(FilmRowMapper.REMOVE_FILM_GENRES_QUERY, film.getId());
             jdbc.batchUpdate(FilmRowMapper.ADD_FILM_GENRE_QUERY, film.getGenres(), film.getGenres().size(),
-                (ps, genre) -> {
-                    ps.setLong(1, film.getId());
-                    ps.setInt(2, genre.getId());
-                });
+                    (ps, genre) -> {
+                        ps.setLong(1, film.getId());
+                        ps.setInt(2, genre.getId());
+                    });
         } catch (DataIntegrityViolationException e) {
             throw new NotFoundException("Не обновить жанры");
         }
-        return film;
+        return getById(film.getId());
     }
 
     @Override
@@ -145,5 +148,15 @@ public class FilmDbStorage implements FilmStorage {
     public List<Film> getPopular(int count) {
         var resultCount = (count <= 0) ? 10 : count;
         return jdbc.query(FilmRowMapper.GET_POPULAR_FILMS_QUERY, new FilmRowMapper(), resultCount);
+    }
+
+    @Override
+    public List<Film> findByFilters(Map<String, Object> filters) {
+        FilmQueryBuilder queryBuilder = new FilmQueryBuilder().addFilters(filters);
+
+        var sql = queryBuilder.buildQuery();
+        var params = queryBuilder.getParameters();
+
+        return namedParameterJdbcTemplate.query(sql, params, new FilmRowMapper());
     }
 }

@@ -19,4 +19,3 @@ public interface UserStorage {
     void addFriend(Long fromId, Long toId);
     void removeFriend(long userId, long friendId);
 }
-

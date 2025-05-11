@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class FilmService {
@@ -51,5 +52,9 @@ public class FilmService {
 
     public List<Film> getAll() {
         return filmStorage.getAll();
+    }
+
+    public List<Film> search(Map<String, Object> filters) {
+        return filmStorage.findByFilters(filters);
     }
 }

@@ -116,6 +116,7 @@ public class UserRowMapper implements RowMapper<User> {
             AND friend_id = ?;
     """;
 
+    @SuppressWarnings("null")
     @Override
     public User mapRow(ResultSet rs, int rowNum) throws SQLException {
         User user = new User();

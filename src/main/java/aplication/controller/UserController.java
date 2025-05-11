@@ -1,6 +1,5 @@
 package aplication.controller;
 
-import aplication.exception.NotFoundException;
 import aplication.model.User;
 import aplication.service.UserService;
 import jakarta.validation.Valid;

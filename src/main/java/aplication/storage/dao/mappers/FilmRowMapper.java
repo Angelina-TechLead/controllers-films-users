@@ -11,7 +11,6 @@ import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
@@ -20,70 +19,69 @@ import java.util.stream.Collectors;
 
 public class FilmRowMapper implements RowMapper<Film> {
     public static final String GET_FILMS_QUERY = """
-            SELECT
-                f.id AS id,
-                f.film_name AS name,
-                f.description AS description,
-                f.release_date AS release_date,
-                f.duration AS duration,
-                f.mpa_id AS rating_id,
-                r.rating_name AS rating_name,
-                ARRAY_AGG(DISTINCT l.user_id) AS likes,
-                CAST(
-                    JSON_ARRAYAGG(
-                        DISTINCT JSON_OBJECT(
-                            'id': g.id,
-                            'name': g.full_name
-                        )
-                    ) FILTER (
-                        WHERE
-                            g.id IS NOT NULL
-                    ) AS VARCHAR
-                ) AS genres
-            FROM
-                films AS f
-                LEFT JOIN likes AS l ON f.id = l.film_id
-                LEFT JOIN film_genres AS fg ON f.id = fg.film_id
-                LEFT JOIN genres AS g ON g.id = fg.genre_id
-                LEFT JOIN mpa_ratings AS r ON f.mpa_id = r.id
-            GROUP BY
-                f.id,
-                r.rating_name;
-            """;
+        SELECT
+            f.id AS id,
+            f.film_name AS name,
+            f.description AS description,
+            f.release_date AS release_date,
+            f.duration AS duration,
+            f.mpa_id AS rating_id,
+            r.rating_name AS rating_name,
+            ARRAY_AGG(
+                DISTINCT l.user_id
+                ORDER BY
+                    l.user_id ASC
+            ) AS likes,
+            JSONB_AGG(
+                JSONB_BUILD_OBJECT('id', g.id, 'name', g.full_name)
+            ) FILTER (
+                WHERE
+                    g.id IS NOT NULL
+            ) AS genres
+        FROM
+            films AS f
+            LEFT JOIN likes AS l ON f.id = l.film_id
+            LEFT JOIN film_genres AS fg ON f.id = fg.film_id
+            LEFT JOIN genres AS g ON g.id = fg.genre_id
+            LEFT JOIN mpa_ratings AS r ON f.mpa_id = r.id
+        GROUP BY
+            f.id,
+            r.rating_name;
+    """;
 
     public static final String GET_POPULAR_FILMS_QUERY  = """
-            SELECT
-                f.id,
-                f.film_name AS name,
-                f.description,
-                f.release_date,
-                f.duration,
-                f.mpa_id AS rating_id,
-                r.rating_name,
-                ARRAY_AGG(DISTINCT l.user_id) AS likes,
-                CAST(
-                    JSON_ARRAYAGG(
-                        DISTINCT JSON_OBJECT(
-                            'id': g.id,
-                            'name': g.full_name
-                        )
-                    ) FILTER (
-                        WHERE
-                            g.id IS NOT NULL
-                    ) AS VARCHAR
-                ) AS genres
-            FROM
-                films AS f
-                LEFT JOIN likes AS l ON f.id = l.film_id
-                LEFT JOIN film_genres AS fg ON f.id = fg.film_id
-                LEFT JOIN genres AS g ON g.id = fg.genre_id
-                LEFT JOIN mpa_ratings AS r ON f.mpa_id = r.id
-            GROUP BY
-                f.id
-            ORDER BY
-                COUNT(DISTINCT l.user_id) DESC
-            LIMIT
-                ?;
+        SELECT
+            f.id,
+            f.film_name AS name,
+            f.description,
+            f.release_date,
+            f.duration,
+            f.mpa_id AS rating_id,
+            r.rating_name,
+            ARRAY_AGG(
+                DISTINCT l.user_id
+                ORDER BY
+                    l.user_id ASC
+            ) AS likes,
+            JSONB_AGG(
+                JSONB_BUILD_OBJECT('id', g.id, 'name', g.full_name)
+            ) FILTER (
+                WHERE
+                    g.id IS NOT NULL
+            ) AS genres
+        FROM
+            films AS f
+            LEFT JOIN likes AS l ON f.id = l.film_id
+            LEFT JOIN film_genres AS fg ON f.id = fg.film_id
+            LEFT JOIN genres AS g ON g.id = fg.genre_id
+            LEFT JOIN mpa_ratings AS r ON f.mpa_id = r.id
+        GROUP BY
+            f.id,
+            r.rating_name
+        ORDER BY
+            COUNT(DISTINCT l.user_id) DESC
+        LIMIT
+            ?;
     """;
 
     public static final String DELETE_FILM_BY_ID_QUERY  = """
@@ -119,13 +117,11 @@ public class FilmRowMapper implements RowMapper<Film> {
             f.duration,
             f.mpa_id AS rating_id,
             r.rating_name,
-            ARRAY_AGG(DISTINCT l.user_id) AS likes,
+            ARRAY_AGG(DISTINCT l.user_id ORDER BY l.user_id ASC) AS likes,
             CAST(
-                JSON_ARRAYAGG(
-                    DISTINCT JSON_OBJECT(
-                        'id': g.id,
-                        'name': g.full_name
-                    )
+                JSONB_AGG(
+                    JSONB_BUILD_OBJECT('id', g.id, 'name', g.full_name)
+                    ORDER BY g.id ASC
                 ) FILTER (
                     WHERE
                         g.id IS NOT NULL
@@ -140,7 +136,8 @@ public class FilmRowMapper implements RowMapper<Film> {
         WHERE
             f.id = ?
         GROUP BY
-            f.id;
+            f.id,
+            r.rating_name;
     """;
 
     public static final String CREATE_FILM_QUERY  = """
@@ -183,6 +180,7 @@ public class FilmRowMapper implements RowMapper<Film> {
             film_id = ?;
     """;
 
+    @SuppressWarnings("null")
     @Override
     public Film mapRow(ResultSet rs, int rowNum) throws SQLException {
         var film = new Film();
@@ -194,8 +192,8 @@ public class FilmRowMapper implements RowMapper<Film> {
             film.setReleaseDate(rs.getDate("release_date").toLocalDate());
         }
 
-        var dbDuration = rs.getObject("duration", Long.class);
-        if (dbDuration != null) {
+        var dbDuration = rs.getLong("duration");
+        if (!rs.wasNull()) {
             film.setDuration(dbDuration);
         }
 
@@ -219,7 +217,6 @@ public class FilmRowMapper implements RowMapper<Film> {
             } catch (JsonProcessingException e) {
                 // do nothing
             }
-
         }
         return film;
     }
