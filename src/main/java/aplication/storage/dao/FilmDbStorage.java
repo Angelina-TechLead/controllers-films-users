@@ -171,4 +171,19 @@ public class FilmDbStorage implements FilmStorage {
         var resultCount = (count <= 0) ? 10 : count;
         return jdbc.query(FilmRowMapper.GET_POPULAR_FILMS_QUERY, new FilmRowMapper(), resultCount);
     }
+
+    @Override
+    public List<Film> getFilmsByDirector(int directorId, String sortBy) {
+        String query = switch (sortBy.toLowerCase()) {
+            case "likes" -> FilmRowMapper.GET_DIRECTOR_FILMS_SORTED_BY_LIKES;
+            case "year" -> FilmRowMapper.GET_DIRECTOR_FILMS_SORTED_BY_YEAR;
+            default -> throw new ValidationException("Параметр sortBy может быть только 'year' или 'likes'");
+        };
+
+        try {
+            return jdbc.query(query, new FilmRowMapper(), directorId);
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException("Режиссер с ID " + directorId + " не найден или у него нет фильмов");
+        }
+    }
 }

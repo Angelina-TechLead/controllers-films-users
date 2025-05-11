@@ -60,6 +60,13 @@ public class FilmController {
         return ResponseEntity.status(HttpStatus.OK).body(updatedFilm);
     }
 
+    @GetMapping("/director/{directorId}")
+    public List<Film> getFilmsByDirector(
+            @PathVariable int directorId,
+            @RequestParam(required = false, defaultValue = "year") String sortBy) {
+
+        return filmService.getFilmsByDirector(directorId, sortBy);
+    }
 
     @PutMapping("/{id}/like/{userId}")
     public ResponseEntity<Film> addLike(@PathVariable long id, @PathVariable long userId) {
