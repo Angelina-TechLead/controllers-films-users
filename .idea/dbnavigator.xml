@@ -10,7 +10,17 @@
     <value-preview-pinned value="false" />
   </component>
   <component name="DBNavigator.Project.DatabaseAssistantManager">
-    <assistants />
+    <assistants>
+      <assistant-state connection-id="80514322-bfe5-4dd0-a3ca-5092730ed2e2" default-profile-name="" selected-profile-name="" selected-model-name="" assistant-type="GENERIC" selected-action="SHOW_SQL" availability="UNAVAILABLE" acknowledgement="NONE">
+        <messages />
+      </assistant-state>
+      <assistant-state connection-id="virtual-sqlite-connection" default-profile-name="" selected-profile-name="" selected-model-name="" assistant-type="GENERIC" selected-action="SHOW_SQL" availability="UNAVAILABLE" acknowledgement="NONE">
+        <messages />
+      </assistant-state>
+      <assistant-state connection-id="virtual-mysql-connection" default-profile-name="" selected-profile-name="" selected-model-name="" assistant-type="GENERIC" selected-action="SHOW_SQL" availability="UNAVAILABLE" acknowledgement="NONE">
+        <messages />
+      </assistant-state>
+    </assistants>
   </component>
   <component name="DBNavigator.Project.DatabaseBrowserManager">
     <autoscroll-to-editor value="false" />
@@ -43,7 +53,7 @@
     <retain-sticky-names value="false" />
   </component>
   <component name="DBNavigator.Project.FileConnectionMappingManager">
-    <mapping file-url="file://$PROJECT_DIR$/src/main/resources/schema.sql" connection-id="80514322-bfe5-4dd0-a3ca-5092730ed2e2" session-id="MAIN" current-schema="public" />
+    <mapping file-url="file://$PROJECT_DIR$/src/main/resources/schema.sql" connection-id="virtual-sqlite-connection" session-id="MAIN" current-schema="" />
     <mapping file-url="file://$PROJECT_DIR$/src/main/resources/data.sql" connection-id="80514322-bfe5-4dd0-a3ca-5092730ed2e2" session-id="MAIN" current-schema="catsgram" />
   </component>
   <component name="DBNavigator.Project.ObjectQuickFilterManager">

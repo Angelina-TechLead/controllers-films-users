@@ -11,7 +11,6 @@ import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
@@ -181,6 +180,20 @@ public class FilmRowMapper implements RowMapper<Film> {
             film_genres
         WHERE
             film_id = ?;
+    """;
+
+    public static final String ADD_FILM_DIRECTOR_QUERY = """
+            INSERT INTO
+                film_directors (film_id, director_id)
+            VALUES
+                (?, ?)
+            """;
+
+    public static final String REMOVE_FILM_DIRECTORS_QUERY  = """
+        DELETE FROM
+            film_directors
+        WHERE
+            film_id = ?
     """;
 
     @Override

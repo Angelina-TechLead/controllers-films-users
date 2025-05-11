@@ -21,6 +21,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Types;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Primary
 @Component
@@ -73,6 +74,18 @@ public class FilmDbStorage implements FilmStorage {
         } catch (DataIntegrityViolationException e) {
             throw new NotFoundException("Жанры не найдены");
         }
+
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            try {
+                jdbc.batchUpdate(FilmRowMapper.ADD_FILM_DIRECTOR_QUERY,
+                        film.getDirectors().stream()
+                                .map(director -> new Object[]{film.getId(), director.getId()})
+                                .collect(Collectors.toList()));
+            } catch (DataIntegrityViolationException e) {
+                throw new NotFoundException("Такой режиссер не найден");
+            }
+        }
+
         return film;
     }
 
@@ -99,6 +112,18 @@ public class FilmDbStorage implements FilmStorage {
                 });
         } catch (DataIntegrityViolationException e) {
             throw new NotFoundException("Не обновить жанры");
+        }
+
+        jdbc.update(FilmRowMapper.REMOVE_FILM_DIRECTORS_QUERY, film.getId());
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            try {
+                jdbc.batchUpdate(FilmRowMapper.ADD_FILM_DIRECTOR_QUERY,
+                        film.getDirectors().stream()
+                                .map(director -> new Object[]{film.getId(), director.getId()})
+                                .collect(Collectors.toList()));
+            } catch (DataIntegrityViolationException e) {
+                throw new NotFoundException("Такой режиссер не найден");
+            }
         }
         return film;
     }
