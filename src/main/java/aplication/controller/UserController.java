@@ -1,6 +1,5 @@
 package aplication.controller;
 
-import aplication.exception.NotFoundException;
 import aplication.model.User;
 import aplication.service.UserService;
 import jakarta.validation.Valid;
@@ -77,10 +76,5 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeFriend(@PathVariable long id, @PathVariable long friendId) {
         userService.removeFriend(id, friendId);
-    }
-
-    @DeleteMapping("/{id}")
-    public User deleteUserById(@PathVariable Long id) {
-        return userService.deleteUserById(id);
     }
 }
