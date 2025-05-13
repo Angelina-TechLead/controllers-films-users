@@ -5,6 +5,7 @@ import aplication.exception.ValidationException;
 import aplication.model.User;
 import aplication.storage.UserStorage;
 
+import aplication.storage.dao.mappers.FilmRowMapper;
 import aplication.storage.dao.mappers.UserRowMapper;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,10 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Types;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Primary
 @Component
@@ -34,6 +32,7 @@ public class UserDbStorage implements UserStorage {
     public UserDbStorage(JdbcTemplate jdbcTemplate) {
         this.jdbc = jdbcTemplate;
     }
+
 
     @Override
     public User create(User user) {
@@ -124,5 +123,11 @@ public class UserDbStorage implements UserStorage {
         existsById(userId);
         existsById(friendId);
         jdbc.update(UserRowMapper.REMOVE_FRIEND_QUERY, userId, friendId);
+    }
+
+    @Override
+    public Collection<Long> getRecommendations(Long id, Integer count) {
+        return jdbc.query(FilmRowMapper.RECOMMENDATIONS_QUERY,
+                (rs, rowNum) -> rs.getLong("film_id"), id, id, count);
     }
 }
