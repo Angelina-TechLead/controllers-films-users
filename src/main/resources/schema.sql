@@ -46,3 +46,20 @@ CREATE TABLE IF NOT EXISTS likes (
 	film_id BIGINT REFERENCES films (id) ON DELETE CASCADE ON UPDATE RESTRICT,
 	CONSTRAINT likes_pk PRIMARY KEY (user_id, film_id)
 );
+
+CREATE TABLE IF NOT EXISTS reviews (
+    review_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    content TEXT NOT NULL,
+    is_positive BOOLEAN NOT NULL,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    film_id BIGINT NOT NULL REFERENCES films(id) ON DELETE CASCADE,
+    useful INT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS review_reactions (
+    review_id BIGINT NOT NULL REFERENCES reviews(review_id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    is_like BOOLEAN NOT NULL,
+    PRIMARY KEY (review_id, user_id)
+);
+
