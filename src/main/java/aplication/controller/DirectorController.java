@@ -2,7 +2,6 @@ package aplication.controller;
 
 import aplication.exception.NotFoundException;
 import aplication.model.Director;
-import aplication.model.Film;
 import aplication.storage.dao.DirectorDbStorage;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/director")
+@RequestMapping("/directors")
 public class DirectorController {
     private final DirectorDbStorage directorDbStorage;
 
@@ -29,10 +28,10 @@ public class DirectorController {
     }
 
     @GetMapping("/{id}")
-    public Director getGenreById(@PathVariable int id) {
+    public Director getDirectorById(@PathVariable int id) {
         var data = directorDbStorage.getById(id);
         if (data == null) {
-            throw new NotFoundException("Жанр не найдены");
+            throw new NotFoundException("Режиссер не найден");
         } else {
             return data;
         }
@@ -45,13 +44,18 @@ public class DirectorController {
     }
 
     @PutMapping
-    public ResponseEntity<Director> updateFilm(@Valid @RequestBody Director newDirector) {
+    public ResponseEntity<Director> update(@Valid @RequestBody Director newDirector) {
         var updatedDirector = directorDbStorage.update(newDirector);
         return ResponseEntity.status(HttpStatus.OK).body(updatedDirector);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Film> removeLike(@PathVariable long id, @PathVariable long userId) {
-
+    public void remove(@PathVariable int id, @PathVariable int userId) {
+        var data = directorDbStorage.getById(id);
+        if (data == null) {
+            throw new NotFoundException("Режиссер не найден");
+        } else {
+            directorDbStorage.delete(id);
+        }
     }
 }
