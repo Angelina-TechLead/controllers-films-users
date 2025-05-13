@@ -1,7 +1,5 @@
 package aplication.controller;
 
-
-import aplication.exception.NotFoundException;
 import aplication.model.Film;
 import aplication.service.FilmService;
 import aplication.service.UserService;
