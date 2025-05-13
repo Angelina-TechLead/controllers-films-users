@@ -267,7 +267,7 @@ public class FilmRowMapper implements RowMapper<Film> {
             (?, ?)
         """;
 
-    public static final String REMOVE_FILM_DIRECTORS_QUERY  = """
+    public static final String REMOVE_FILM_DIRECTOR_QUERY = """
         DELETE FROM
             film_directors
         WHERE

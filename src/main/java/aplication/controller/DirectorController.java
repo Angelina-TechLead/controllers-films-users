@@ -1,61 +1,51 @@
 package aplication.controller;
 
-import aplication.exception.NotFoundException;
 import aplication.model.Director;
-import aplication.storage.dao.DirectorDbStorage;
+import aplication.model.Film;
+import aplication.service.DirectorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
-
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/directors")
+@RequiredArgsConstructor
 public class DirectorController {
-    private final DirectorDbStorage directorDbStorage;
+    private final DirectorService directorService;
 
     @GetMapping
-    public ResponseEntity<List<Director>> getAllDirectors() {
-        if (directorDbStorage.getAll() != null) {
-            return ResponseEntity.status(HttpStatus.OK).body(directorDbStorage.getAll());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+    public List<Director> getAll() {
+        return directorService.getAll();
     }
 
     @GetMapping("/{id}")
-    public Director getDirectorById(@PathVariable int id) {
-        var data = directorDbStorage.getById(id);
-        if (data == null) {
-            throw new NotFoundException("Режиссер не найден");
-        } else {
-            return data;
-        }
+    public Director getById(@PathVariable int id) {
+        return directorService.getById(id);
     }
 
     @PostMapping
-    public ResponseEntity<Director> create(@Valid @RequestBody Director director) {
-        var newDirector = directorDbStorage.create(director);
-        return ResponseEntity.status(HttpStatus.CREATED).body(newDirector);
+    @ResponseStatus(HttpStatus.CREATED)
+    public Director create(@Valid @RequestBody Director director) {
+        return directorService.create(director);
     }
 
     @PutMapping
-    public ResponseEntity<Director> update(@Valid @RequestBody Director newDirector) {
-        var updatedDirector = directorDbStorage.update(newDirector);
-        return ResponseEntity.status(HttpStatus.OK).body(updatedDirector);
+    public Director update(@Valid @RequestBody Director director) {
+        return directorService.update(director);
     }
 
     @DeleteMapping("/{id}")
-    public void remove(@PathVariable int id, @PathVariable int userId) {
-        var data = directorDbStorage.getById(id);
-        if (data == null) {
-            throw new NotFoundException("Режиссер не найден");
-        } else {
-            directorDbStorage.delete(id);
-        }
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable int id) {
+        directorService.delete(id);
+    }
+
+    @GetMapping("/{directorId}/films")
+    public List<Film> getFilmsByDirector(
+            @PathVariable int directorId,
+            @RequestParam(defaultValue = "year") String sortBy) {
+        return directorService.getFilmsByDirector(directorId, sortBy);
     }
 }

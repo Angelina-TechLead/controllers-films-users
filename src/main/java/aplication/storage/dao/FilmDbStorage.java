@@ -114,7 +114,7 @@ public class FilmDbStorage implements FilmStorage {
             throw new NotFoundException("Не обновить жанры");
         }
 
-        jdbc.update(FilmRowMapper.REMOVE_FILM_DIRECTORS_QUERY, film.getId());
+        jdbc.update(FilmRowMapper.REMOVE_FILM_DIRECTOR_QUERY, film.getId());
         if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
             try {
                 jdbc.batchUpdate(FilmRowMapper.ADD_FILM_DIRECTOR_QUERY,
@@ -185,5 +185,14 @@ public class FilmDbStorage implements FilmStorage {
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException("Режиссер с ID " + directorId + " не найден или у него нет фильмов");
         }
+    }
+
+
+    public void addDirector(long filmId, int directorId) {
+        jdbc.update( FilmRowMapper.ADD_FILM_DIRECTOR_QUERY, filmId, directorId);
+    }
+
+    public void removeDirectors(long filmId) {
+        jdbc.update( FilmRowMapper.REMOVE_FILM_DIRECTOR_QUERY, filmId);
     }
 }
