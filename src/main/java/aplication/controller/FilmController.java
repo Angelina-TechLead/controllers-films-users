@@ -54,6 +54,12 @@ public class FilmController {
         return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
     }
 
+    @DeleteMapping("/{filmId}")
+    public ResponseEntity<Void> deleteFilm(@PathVariable long filmId) {
+        filmService.delete(filmId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Film> updateFilm(@PathVariable long id, @Valid @RequestBody Film film) {
         var updatedFilm = filmService.update(film);
