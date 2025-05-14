@@ -22,4 +22,3 @@ public interface UserStorage {
 
     Collection<Long> getRecommendations(Long id, Integer count);
 }
-

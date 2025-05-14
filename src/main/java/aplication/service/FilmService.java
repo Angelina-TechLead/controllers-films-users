@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class FilmService {
@@ -61,7 +62,13 @@ public class FilmService {
         return filmStorage.getAll();
     }
 
+
+    public List<Film> search(Map<String, Object> filters) {
+        return filmStorage.findByFilters(filters);
+    }
+  
     public List<Film> getCommonFilms(long userId, long friendId) {
         return filmStorage.getCommonFilms(userId, friendId);
     }
 }
+  
