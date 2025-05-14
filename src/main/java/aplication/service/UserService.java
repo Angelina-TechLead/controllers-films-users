@@ -38,6 +38,12 @@ public class UserService {
         return userStorage.update(u);
     }
 
+    public void deleteUserById(Long id) {
+        if (id == null) throw new IllegalArgumentException("User id не может быть null");
+        var user = getById(id); // Проверяем существование пользователя
+        userStorage.delete(user);
+    }
+
     public void removeFriend(long userId, long friendId) {
       userStorage.removeFriend(userId, friendId);
     }
@@ -75,12 +81,6 @@ public class UserService {
         } else {
             return userStorage.getFriends(userId);
         }
-    }
-
-    public User deleteUserById(Long id) {
-        if (id == null) throw new IllegalArgumentException("User id не может быть null");
-        var user = getById(id);
-        return userStorage.delete(user);
     }
 }
 
