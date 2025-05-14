@@ -80,6 +80,31 @@ CREATE TABLE IF NOT EXISTS likes (
     CONSTRAINT likes_pk PRIMARY KEY (user_id, film_id)
 );
 
+-- Перечисления событий
+DO
+' 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = ''event_type_enum'') THEN
+        CREATE TYPE event_type_enum AS ENUM (''LIKE'', ''REVIEW'', ''FRIEND'');
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = ''operation_type_enum'') THEN
+        CREATE TYPE operation_type_enum AS ENUM (''ADD'', ''REMOVE'', ''UPDATE'');
+    END IF;
+END
+';
+
+-- Таблица событий
+CREATE TABLE IF NOT EXISTS user_events (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    event_type event_type_enum NOT NULL,
+    operation operation_type_enum NOT NULL,
+    entity_id BIGINT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 -- Таблица отзывов
 CREATE TABLE IF NOT EXISTS reviews (
     review_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

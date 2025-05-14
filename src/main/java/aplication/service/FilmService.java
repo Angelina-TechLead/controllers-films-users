@@ -62,7 +62,6 @@ public class FilmService {
         return filmStorage.getAll();
     }
 
-
     public List<Film> search(Map<String, Object> filters) {
         return filmStorage.findByFilters(filters);
     }

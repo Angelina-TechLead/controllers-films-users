@@ -49,7 +49,7 @@ public class UserService {
     }
 
     public void removeFriend(long userId, long friendId) {
-      userStorage.removeFriend(userId, friendId);
+        userStorage.removeFriend(userId, friendId);
     }
 
     public Set<User> getCommonFriends(long userId, long friendId) {
@@ -88,11 +88,12 @@ public class UserService {
     }
 
     public User deleteUserById(Long id) {
-        if (id == null) throw new IllegalArgumentException("User id не может быть null");
+        if (id == null)
+            throw new IllegalArgumentException("User id не может быть null");
         var user = getById(id);
         return userStorage.delete(user);
     }
-
+  
     public Collection<Film> getRecommendations(Long id, Integer count) {
         return userStorage.getRecommendations(id, count).stream()
                 .map(filmStorage::getById)
