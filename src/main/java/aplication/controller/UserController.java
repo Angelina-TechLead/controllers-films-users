@@ -1,5 +1,7 @@
 package aplication.controller;
 
+import aplication.exception.NotFoundException;
+import aplication.model.Film;
 import aplication.model.User;
 import aplication.service.UserService;
 import jakarta.validation.Valid;
@@ -9,10 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -76,5 +75,16 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeFriend(@PathVariable long id, @PathVariable long friendId) {
         userService.removeFriend(id, friendId);
+    }
+
+    @DeleteMapping("/{id}")
+    public User deleteUserById(@PathVariable Long id) {
+        return userService.deleteUserById(id);
+    }
+
+    @GetMapping("{id}/recommendations")
+    public Collection<Film> getRecommendations(@PathVariable Long id,
+                                               @RequestParam(required = false, defaultValue = "10") Integer count) {
+        return userService.getRecommendations(id, count);
     }
 }

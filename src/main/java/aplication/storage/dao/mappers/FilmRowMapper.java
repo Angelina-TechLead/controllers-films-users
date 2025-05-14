@@ -265,6 +265,25 @@ public class FilmRowMapper implements RowMapper<Film> {
             film_id = ?;
     """;
 
+    public static final String RECOMMENDATIONS_QUERY = """
+    SELECT L.film_id
+    FROM (
+        SELECT L2.user_id, COUNT(*) AS cnt
+        FROM likes L1
+        JOIN likes L2 ON L1.film_id = L2.film_id
+        WHERE L1.user_id = ?
+          AND L2.user_id <> L1.user_id
+        GROUP BY L2.user_id
+        ORDER BY cnt DESC
+        LIMIT 1
+    ) AS U
+    JOIN likes L ON U.user_id = L.user_id
+    WHERE L.film_id NOT IN (
+        SELECT film_id FROM likes WHERE user_id = ?
+    )
+    LIMIT ?;
+   """;
+     
     public static final String ADD_FILM_DIRECTOR_QUERY = """
         INSERT INTO
             film_directors (film_id, director_id)
@@ -313,6 +332,7 @@ WHERE
     )
 GROUP BY f.id, r.rating_name
 ORDER BY COUNT(DISTINCT l.user_id) DESC;
+
 """;
 
     @Override
