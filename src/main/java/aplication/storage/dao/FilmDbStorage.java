@@ -22,6 +22,8 @@ import java.sql.PreparedStatement;
 import java.sql.Types;
 import java.util.*;
 
+import static aplication.storage.dao.mappers.FilmRowMapper.GET_COMMON_FILMS_QUERY;
+
 @Primary
 @Component
 @Repository
@@ -145,5 +147,10 @@ public class FilmDbStorage implements FilmStorage {
     public List<Film> getPopular(int count) {
         var resultCount = (count <= 0) ? 10 : count;
         return jdbc.query(FilmRowMapper.GET_POPULAR_FILMS_QUERY, new FilmRowMapper(), resultCount);
+    }
+
+    @Override
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        return jdbc.query(GET_COMMON_FILMS_QUERY, new FilmRowMapper(), userId, friendId);
     }
 }
