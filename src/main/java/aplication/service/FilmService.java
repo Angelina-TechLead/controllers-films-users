@@ -1,12 +1,14 @@
 package aplication.service;
 
 import aplication.exception.NotFoundException;
+import aplication.exception.ValidationException;
 import aplication.model.Film;
 import aplication.storage.FilmStorage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +48,12 @@ public class FilmService {
         return filmStorage.getPopular(count);
     }
 
+    public List<Film> getFilmsByDirector(int directorId, String sortBy) {
+        if (sortBy == null) sortBy = "year";
+
+        return filmStorage.getFilmsByDirector(directorId, sortBy);
+    }
+
     public Film getById(long filmId) {
         return filmStorage.getById(filmId);
     }
@@ -54,7 +62,13 @@ public class FilmService {
         return filmStorage.getAll();
     }
 
+
     public List<Film> search(Map<String, Object> filters) {
         return filmStorage.findByFilters(filters);
     }
+  
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        return filmStorage.getCommonFilms(userId, friendId);
+    }
 }
+  
