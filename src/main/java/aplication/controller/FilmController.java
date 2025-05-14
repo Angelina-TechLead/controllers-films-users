@@ -9,11 +9,22 @@ import aplication.service.UserEventService;
 import aplication.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +32,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/films")
 public class FilmController {
+    private static final Logger log = LoggerFactory.getLogger(FilmController.class);
+
     private final FilmService filmService;
     private final UserService userService;
     private final UserEventService userEventService;
@@ -61,10 +74,23 @@ public class FilmController {
         return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
     }
 
+    @DeleteMapping("/{filmId}")
+    public ResponseEntity<Void> deleteFilm(@PathVariable long filmId) {
+        filmService.delete(filmId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Film> updateFilm(@PathVariable long id, @Valid @RequestBody Film film) {
         var updatedFilm = filmService.update(film);
         return ResponseEntity.status(HttpStatus.OK).body(updatedFilm);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public List<Film> getFilmsByDirector(
+            @PathVariable int directorId,
+            @RequestParam(required = false, defaultValue = "year") String sortBy) {
+        return filmService.getFilmsByDirector(directorId, sortBy);
     }
 
     @PutMapping("/{id}/like/{userId}")
@@ -136,5 +162,22 @@ public class FilmController {
         return films.isEmpty()
                 ? ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
                 : ResponseEntity.status(HttpStatus.OK).body(films);
+    }
+}
+
+    @GetMapping("/common")
+    public ResponseEntity<List<Film>> getCommonFilms(
+            @RequestParam long userId,
+            @RequestParam long friendId) {
+        log.info("Fetching common films for user {} and friend {}", userId, friendId);
+
+        List<Film> commonFilms = filmService.getCommonFilms(userId, friendId);
+
+        if (commonFilms.isEmpty()) {
+            log.info("No common films found for user {} and friend {}", userId, friendId);
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+
+        return ResponseEntity.ok(commonFilms);
     }
 }

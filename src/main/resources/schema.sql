@@ -4,9 +4,9 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 -- Таблица пользователей
 CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
-    login VARCHAR(255) NOT NULL UNIQUE,
-    username VARCHAR(255) NOT NULL UNIQUE,
-    email VARCHAR(255) NOT NULL UNIQUE,
+    login VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
     birthday DATE NOT NULL,
     CONSTRAINT users_unique_email UNIQUE (email),
     CONSTRAINT users_unique_login UNIQUE (login)
@@ -44,6 +44,19 @@ CREATE TABLE IF NOT EXISTS films (
 -- Индексы для фильмов
 CREATE INDEX IF NOT EXISTS idx_films_name_trgm ON films USING gin(film_name gin_trgm_ops);
 
+-- Таблица режиссёров
+CREATE TABLE IF NOT EXISTS directors (
+    id SERIAL PRIMARY KEY,
+    director_name VARCHAR(50) NOT NULL
+);
+
+-- Таблица связи фильмов и режиссёров
+CREATE TABLE IF NOT EXISTS film_directors (
+    film_id BIGINT REFERENCES films (id) ON DELETE CASCADE ON UPDATE RESTRICT,
+    director_id INT REFERENCES directors (id) ON DELETE CASCADE ON UPDATE RESTRICT,
+    CONSTRAINT film_directors_pk PRIMARY KEY (film_id, director_id)
+);
+
 -- Таблица жанров
 CREATE TABLE IF NOT EXISTS genres (
     id SERIAL PRIMARY KEY,
@@ -67,7 +80,7 @@ CREATE TABLE IF NOT EXISTS likes (
     CONSTRAINT likes_pk PRIMARY KEY (user_id, film_id)
 );
 
--- Таблица событий
+-- Перечисления событий
 DO
 ' 
 BEGIN
@@ -81,6 +94,7 @@ BEGIN
 END
 ';
 
+-- Таблица событий
 CREATE TABLE IF NOT EXISTS user_events (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
@@ -89,4 +103,22 @@ CREATE TABLE IF NOT EXISTS user_events (
     entity_id BIGINT NOT NULL,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Таблица отзывов
+CREATE TABLE IF NOT EXISTS reviews (
+    review_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    content TEXT NOT NULL,
+    is_positive BOOLEAN NOT NULL,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    film_id BIGINT NOT NULL REFERENCES films(id) ON DELETE CASCADE,
+    useful INT DEFAULT 0
+);
+
+-- Таблица связи отзывов и пользователей
+CREATE TABLE IF NOT EXISTS review_reactions (
+    review_id BIGINT NOT NULL REFERENCES reviews(review_id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    is_like BOOLEAN NOT NULL,
+    PRIMARY KEY (review_id, user_id)
 );

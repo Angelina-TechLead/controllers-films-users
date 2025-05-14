@@ -23,6 +23,9 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Types;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static aplication.storage.dao.mappers.FilmRowMapper.GET_COMMON_FILMS_QUERY;
 
 @Primary
 @Component
@@ -76,6 +79,18 @@ public class FilmDbStorage implements FilmStorage {
         } catch (DataIntegrityViolationException e) {
             throw new NotFoundException("Жанры не найдены");
         }
+
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            try {
+                jdbc.batchUpdate(FilmRowMapper.ADD_FILM_DIRECTOR_QUERY,
+                        film.getDirectors().stream()
+                                .map(director -> new Object[]{film.getId(), director.getId()})
+                                .collect(Collectors.toList()));
+            } catch (DataIntegrityViolationException e) {
+                throw new NotFoundException("Такой режиссер не найден");
+            }
+        }
+
         return film;
     }
 
@@ -102,6 +117,18 @@ public class FilmDbStorage implements FilmStorage {
                     });
         } catch (DataIntegrityViolationException e) {
             throw new NotFoundException("Не обновить жанры");
+        }
+
+        jdbc.update(FilmRowMapper.REMOVE_FILM_DIRECTOR_QUERY, film.getId());
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            try {
+                jdbc.batchUpdate(FilmRowMapper.ADD_FILM_DIRECTOR_QUERY,
+                        film.getDirectors().stream()
+                                .map(director -> new Object[]{film.getId(), director.getId()})
+                                .collect(Collectors.toList()));
+            } catch (DataIntegrityViolationException e) {
+                throw new NotFoundException("Такой режиссер не найден");
+            }
         }
         return getById(film.getId());
     }
@@ -152,5 +179,35 @@ public class FilmDbStorage implements FilmStorage {
         var params = queryBuilder.getParameters();
 
         return namedParameterJdbcTemplate.query(sql, params, new FilmRowMapper());
+    }
+
+    public List<Film> getFilmsByDirector(int directorId, String sortBy) {
+        String query = switch (sortBy.toLowerCase()) {
+            case "likes" -> FilmRowMapper.GET_DIRECTOR_FILMS_SORTED_BY_LIKES;
+            case "year" -> FilmRowMapper.GET_DIRECTOR_FILMS_SORTED_BY_YEAR;
+            default -> throw new ValidationException("Параметр sortBy может быть только 'year' или 'likes'");
+        };
+
+        try {
+            return jdbc.query(query, new FilmRowMapper(), directorId);
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException("Режиссер с ID " + directorId + " не найден или у него нет фильмов");
+        }
+    }
+
+
+    @Override
+    public void addDirector(long filmId, int directorId) {
+        jdbc.update( FilmRowMapper.ADD_FILM_DIRECTOR_QUERY, filmId, directorId);
+    }
+
+    @Override
+    public void removeDirectors(long filmId) {
+        jdbc.update( FilmRowMapper.REMOVE_FILM_DIRECTOR_QUERY, filmId);
+    }
+  
+    @Override
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        return jdbc.query(GET_COMMON_FILMS_QUERY, new FilmRowMapper(), userId, friendId);
     }
 }
