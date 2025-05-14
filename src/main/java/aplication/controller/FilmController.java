@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @RequiredArgsConstructor
 @RestController
@@ -50,9 +49,12 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public ResponseEntity<List<Film>> getMostPopularFilms(@RequestParam(defaultValue = "10") int count) {
-        var films = filmService.getPopular(count);
-        return ResponseEntity.status(HttpStatus.OK).body(films);
+    public ResponseEntity<List<Film>> popular(@RequestParam Map<String, Object> params) {
+        List<Film> films = filmService.search(params);
+
+        return films.isEmpty()
+                ? ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
+                : ResponseEntity.ok(films);
     }
 
     @PostMapping

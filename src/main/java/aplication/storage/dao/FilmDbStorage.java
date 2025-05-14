@@ -172,12 +172,6 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getPopular(int count) {
-        var resultCount = (count <= 0) ? 10 : count;
-        return jdbc.query(FilmRowMapper.GET_POPULAR_FILMS_QUERY, new FilmRowMapper(), resultCount);
-    }
-
-    @Override
     public List<Film> findByFilters(Map<String, Object> filters) {
         FilmQueryBuilder queryBuilder = new FilmQueryBuilder().addFilters(filters);
 

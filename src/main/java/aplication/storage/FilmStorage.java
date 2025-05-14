@@ -14,7 +14,6 @@ public interface FilmStorage {
     void removeLike(long filmId, long userId);
 
     List<Film> getAll();
-    List<Film> getPopular(int count);
     List<Film> findByFilters(Map<String, Object> filters);
     
     Film getById(long id);
