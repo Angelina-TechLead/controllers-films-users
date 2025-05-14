@@ -23,6 +23,8 @@ import java.sql.Types;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static aplication.storage.dao.mappers.FilmRowMapper.GET_COMMON_FILMS_QUERY;
+
 @Primary
 @Component
 @Repository
@@ -188,11 +190,18 @@ public class FilmDbStorage implements FilmStorage {
     }
 
 
+    @Override
     public void addDirector(long filmId, int directorId) {
         jdbc.update( FilmRowMapper.ADD_FILM_DIRECTOR_QUERY, filmId, directorId);
     }
 
+    @Override
     public void removeDirectors(long filmId) {
         jdbc.update( FilmRowMapper.REMOVE_FILM_DIRECTOR_QUERY, filmId);
+    }
+  
+    @Override
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        return jdbc.query(GET_COMMON_FILMS_QUERY, new FilmRowMapper(), userId, friendId);
     }
 }

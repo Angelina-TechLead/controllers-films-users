@@ -7,6 +7,8 @@ import aplication.model.Mpa;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
 
 
@@ -19,6 +21,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FilmRowMapper implements RowMapper<Film> {
+    
+    private static final Logger log = LoggerFactory.getLogger(FilmRowMapper.class);
+
     public static final String GET_FILMS_QUERY = """
             SELECT
                 f.id AS id,
@@ -274,6 +279,42 @@ public class FilmRowMapper implements RowMapper<Film> {
             film_id = ?
     """;
 
+    public static final String GET_COMMON_FILMS_QUERY = """
+    SELECT
+    f.id,
+    f.film_name AS name,
+    f.description,
+    f.release_date,
+    f.duration,
+    f.mpa_id AS rating_id,
+    r.rating_name,
+    ARRAY_AGG(DISTINCT l.user_id) AS likes,
+    CAST(
+        JSON_ARRAYAGG(
+            DISTINCT JSON_OBJECT(
+                'id': g.id,
+                'name': g.full_name
+            )
+        ) FILTER (
+            WHERE g.id IS NOT NULL
+        ) AS VARCHAR
+    ) AS genres
+FROM
+    films f
+    LEFT JOIN likes l ON f.id = l.film_id
+    LEFT JOIN film_genres fg ON f.id = fg.film_id
+    LEFT JOIN genres g ON fg.genre_id = g.id
+    LEFT JOIN mpa_ratings r ON f.mpa_id = r.id
+WHERE
+    f.id IN (
+        SELECT film_id FROM likes WHERE user_id = ?
+        INTERSECT
+        SELECT film_id FROM likes WHERE user_id = ?
+    )
+GROUP BY f.id, r.rating_name
+ORDER BY COUNT(DISTINCT l.user_id) DESC;
+""";
+
     @Override
     public Film mapRow(ResultSet rs, int rowNum) throws SQLException {
         var film = new Film();
@@ -308,7 +349,7 @@ public class FilmRowMapper implements RowMapper<Film> {
                 Set<Genre> filmGenres = objectMapper.readValue(dbGenres, new TypeReference<Set<Genre>>() {});
                 film.setGenres(filmGenres);
             } catch (JsonProcessingException e) {
-                // Логирование ошибки
+                log.error("Error parsing genres JSON: {}", e.getMessage());
             }
         }
 
