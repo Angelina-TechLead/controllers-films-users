@@ -1,17 +1,19 @@
 package aplication.storage.dao.mappers;
 
+import aplication.model.Director;
 import aplication.model.Film;
 import aplication.model.Genre;
 import aplication.model.Mpa;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
 
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
@@ -19,6 +21,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FilmRowMapper implements RowMapper<Film> {
+    
+    private static final Logger log = LoggerFactory.getLogger(FilmRowMapper.class);
+
     public static final String GET_FILMS_QUERY = """
             SELECT
                 f.id AS id,
@@ -84,6 +89,83 @@ public class FilmRowMapper implements RowMapper<Film> {
                 COUNT(DISTINCT l.user_id) DESC
             LIMIT
                 ?;
+    """;
+
+    public static final String GET_DIRECTOR_FILMS_SORTED_BY_YEAR = """
+    SELECT 
+        f.id,
+        f.film_name AS name,
+        f.description,
+        f.release_date,
+        f.duration,
+        f.mpa_id AS rating_id,
+        r.rating_name,
+        ARRAY_AGG(DISTINCT l.user_id) AS likes,
+        CAST(
+            JSON_ARRAYAGG(
+                DISTINCT JSON_OBJECT(
+                    'id': g.id,
+                    'name': g.full_name
+                )
+            ) FILTER (WHERE g.id IS NOT NULL) AS VARCHAR
+        ) AS genres,
+        CAST(
+            JSON_ARRAYAGG(
+                DISTINCT JSON_OBJECT(
+                    'id': d.id,
+                    'name': d.director_name
+                )
+            ) FILTER (WHERE d.id IS NOT NULL) AS VARCHAR
+        ) AS directors
+    FROM films AS f
+    JOIN film_directors AS fd ON f.id = fd.film_id
+    JOIN directors AS d ON fd.director_id = d.id
+    LEFT JOIN likes AS l ON f.id = l.film_id
+    LEFT JOIN film_genres AS fg ON f.id = fg.film_id
+    LEFT JOIN genres AS g ON g.id = fg.genre_id
+    LEFT JOIN mpa_ratings AS r ON f.mpa_id = r.id
+    WHERE d.id = ?
+    GROUP BY f.id, r.rating_name
+    ORDER BY f.release_date
+    """;
+
+    public static final String GET_DIRECTOR_FILMS_SORTED_BY_LIKES = """
+    SELECT 
+        f.id,
+        f.film_name AS name,
+        f.description,
+        f.release_date,
+        f.duration,
+        f.mpa_id AS rating_id,
+        r.rating_name,
+        ARRAY_AGG(DISTINCT l.user_id) AS likes,
+        CAST(
+            JSON_ARRAYAGG(
+                DISTINCT JSON_OBJECT(
+                    'id': g.id,
+                    'name': g.full_name
+                )
+            ) FILTER (WHERE g.id IS NOT NULL) AS VARCHAR
+        ) AS genres,
+        CAST(
+            JSON_ARRAYAGG(
+                DISTINCT JSON_OBJECT(
+                    'id': d.id,
+                    'name': d.director_name
+                )
+            ) FILTER (WHERE d.id IS NOT NULL) AS VARCHAR
+        ) AS directors,
+        COUNT(DISTINCT l.user_id) AS likes_count
+    FROM films AS f
+    JOIN film_directors AS fd ON f.id = fd.film_id
+    JOIN directors AS d ON fd.director_id = d.id
+    LEFT JOIN likes AS l ON f.id = l.film_id
+    LEFT JOIN film_genres AS fg ON f.id = fg.film_id
+    LEFT JOIN genres AS g ON g.id = fg.genre_id
+    LEFT JOIN mpa_ratings AS r ON f.mpa_id = r.id
+    WHERE d.id = ?
+    GROUP BY f.id, r.rating_name
+    ORDER BY likes_count DESC, f.release_date DESC
     """;
 
     public static final String DELETE_FILM_BY_ID_QUERY  = """
@@ -200,6 +282,57 @@ public class FilmRowMapper implements RowMapper<Film> {
         SELECT film_id FROM likes WHERE user_id = ?
     )
     LIMIT ?;
+   """;
+     
+    public static final String ADD_FILM_DIRECTOR_QUERY = """
+        INSERT INTO
+            film_directors (film_id, director_id)
+        VALUES
+            (?, ?)
+        """;
+
+    public static final String REMOVE_FILM_DIRECTOR_QUERY = """
+        DELETE FROM
+            film_directors
+        WHERE
+            film_id = ?
+    """;
+
+    public static final String GET_COMMON_FILMS_QUERY = """
+    SELECT
+    f.id,
+    f.film_name AS name,
+    f.description,
+    f.release_date,
+    f.duration,
+    f.mpa_id AS rating_id,
+    r.rating_name,
+    ARRAY_AGG(DISTINCT l.user_id) AS likes,
+    CAST(
+        JSON_ARRAYAGG(
+            DISTINCT JSON_OBJECT(
+                'id': g.id,
+                'name': g.full_name
+            )
+        ) FILTER (
+            WHERE g.id IS NOT NULL
+        ) AS VARCHAR
+    ) AS genres
+FROM
+    films f
+    LEFT JOIN likes l ON f.id = l.film_id
+    LEFT JOIN film_genres fg ON f.id = fg.film_id
+    LEFT JOIN genres g ON fg.genre_id = g.id
+    LEFT JOIN mpa_ratings r ON f.mpa_id = r.id
+WHERE
+    f.id IN (
+        SELECT film_id FROM likes WHERE user_id = ?
+        INTERSECT
+        SELECT film_id FROM likes WHERE user_id = ?
+    )
+GROUP BY f.id, r.rating_name
+ORDER BY COUNT(DISTINCT l.user_id) DESC;
+
 """;
 
     @Override
@@ -228,18 +361,30 @@ public class FilmRowMapper implements RowMapper<Film> {
 
         film.setLikes(makeLongSet(rs.getArray("likes")));
 
+        // Обработка жанров
         String dbGenres = rs.getString("genres");
         if (dbGenres != null && !dbGenres.isBlank()) {
             ObjectMapper objectMapper = new ObjectMapper();
             try {
-                Set<Genre> filmGenres = objectMapper.readValue(dbGenres, new TypeReference<Set<Genre>>() {
-                });
+                Set<Genre> filmGenres = objectMapper.readValue(dbGenres, new TypeReference<Set<Genre>>() {});
                 film.setGenres(filmGenres);
             } catch (JsonProcessingException e) {
-                // do nothing
+                log.error("Error parsing genres JSON: {}", e.getMessage());
             }
-
         }
+
+        // Обработка режиссеров
+        String dbDirectors = rs.getString("directors");
+        if (dbDirectors != null && !dbDirectors.isBlank()) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            try {
+                Set<Director> filmDirectors = objectMapper.readValue(dbDirectors, new TypeReference<Set<Director>>() {});
+                film.setDirectors(filmDirectors);
+            } catch (JsonProcessingException e) {
+                // Логирование ошибки
+            }
+        }
+
         return film;
     }
 

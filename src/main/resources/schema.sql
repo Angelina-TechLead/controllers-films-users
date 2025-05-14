@@ -1,15 +1,16 @@
 CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
-    login VARCHAR(255) NOT NULL UNIQUE,
-    username VARCHAR(255) NOT NULL UNIQUE,
-    email VARCHAR(255) NOT NULL UNIQUE,
+    login VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
     birthday DATE NOT NULL,
-	CONSTRAINT users_unique_email UNIQUE (email),
-	CONSTRAINT users_unique_login UNIQUE (login)
+    CONSTRAINT users_unique_email UNIQUE (username),
+    CONSTRAINT users_unique_email UNIQUE (email),
+    CONSTRAINT users_unique_login UNIQUE (login)
 );
 
 CREATE TABLE IF NOT EXISTS friends (
-    user_id BIGINT REFERENCES users (id) ON DELETE CASCADE ON UPDATE RESTRICT  ,
+    user_id BIGINT REFERENCES users (id) ON DELETE CASCADE ON UPDATE RESTRICT,
     friend_id BIGINT REFERENCES users (id) ON DELETE CASCADE ON UPDATE RESTRICT,
     CONSTRAINT friends_pk PRIMARY KEY (user_id, friend_id)
 );
@@ -29,6 +30,17 @@ CREATE TABLE IF NOT EXISTS films (
     mpa_id INT REFERENCES mpa_ratings (id) ON DELETE RESTRICT ON UPDATE RESTRICT
 );
 
+CREATE TABLE IF NOT EXISTS directors (
+    id SERIAL PRIMARY KEY,
+    director_name VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS film_directors (
+    film_id BIGINT REFERENCES films (id) ON DELETE CASCADE ON UPDATE RESTRICT,
+    director_id INT REFERENCES directors (id) ON DELETE CASCADE ON UPDATE RESTRICT,
+    CONSTRAINT film_directors_pk PRIMARY KEY (film_id, director_id)
+);
+
 CREATE TABLE IF NOT EXISTS genres (
     id SERIAL PRIMARY KEY,
     full_name VARCHAR(50) NOT NULL,
@@ -37,12 +49,29 @@ CREATE TABLE IF NOT EXISTS genres (
 
 CREATE TABLE IF NOT EXISTS film_genres (
     film_id BIGINT REFERENCES films (id) ON DELETE CASCADE ON UPDATE RESTRICT,
-	genre_id INT REFERENCES genres (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
-	CONSTRAINT film_genres_pk PRIMARY KEY (film_id, genre_id)
+    genre_id INT REFERENCES genres (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+    CONSTRAINT film_genres_pk PRIMARY KEY (film_id, genre_id)
 );
 
 CREATE TABLE IF NOT EXISTS likes (
-	user_id BIGINT REFERENCES users (id) ON DELETE CASCADE ON UPDATE RESTRICT,
-	film_id BIGINT REFERENCES films (id) ON DELETE CASCADE ON UPDATE RESTRICT,
-	CONSTRAINT likes_pk PRIMARY KEY (user_id, film_id)
+    user_id BIGINT REFERENCES users (id) ON DELETE CASCADE ON UPDATE RESTRICT,
+    film_id BIGINT REFERENCES films (id) ON DELETE CASCADE ON UPDATE RESTRICT,
+    CONSTRAINT likes_pk PRIMARY KEY (user_id, film_id)
 );
+
+CREATE TABLE IF NOT EXISTS reviews (
+    review_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    content TEXT NOT NULL,
+    is_positive BOOLEAN NOT NULL,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    film_id BIGINT NOT NULL REFERENCES films(id) ON DELETE CASCADE,
+    useful INT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS review_reactions (
+    review_id BIGINT NOT NULL REFERENCES reviews(review_id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    is_like BOOLEAN NOT NULL,
+    PRIMARY KEY (review_id, user_id)
+);
+
