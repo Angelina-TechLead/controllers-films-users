@@ -86,13 +86,6 @@ public class UserService {
             return userStorage.getFriends(userId);
         }
     }
-
-    public User deleteUserById(Long id) {
-        if (id == null)
-            throw new IllegalArgumentException("User id не может быть null");
-        var user = getById(id);
-        return userStorage.delete(user);
-    }
   
     public Collection<Film> getRecommendations(Long id, Integer count) {
         return userStorage.getRecommendations(id, count).stream()

@@ -1,14 +1,13 @@
 package aplication.storage.dao;
 
 import java.sql.PreparedStatement;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Objects;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -24,12 +23,9 @@ import aplication.storage.dao.mappers.UserEventRowMapper;
 @Primary
 @Component
 @Repository
+@RequiredArgsConstructor
 public class UserEventDbStorage implements UserEventStorage {
     private final JdbcTemplate jdbc;
-
-    public UserEventDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbc = jdbcTemplate;
-    }
 
     @Override
     public List<UserEvent> getRecentEvents(int userId) {

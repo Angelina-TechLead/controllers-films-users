@@ -29,19 +29,19 @@ public class UserRowMapper implements RowMapper<User> {
 
     public static final String GET_USER_BY_ID_QUERY = """
         SELECT
-               u.id,
-               u.email,
-               u.login,
-               u.username AS name,
-               u.birthday AS birthday,
-               ARRAY_AGG(DISTINCT f.friend_id) AS friends
-           FROM
-               users AS u
-               LEFT JOIN friends AS f ON u.id = f.user_id
-           WHERE
-               u.id = ?
-           GROUP BY
-               u.id;
+           u.id,
+           u.email,
+           u.login,
+           u.username AS name,
+           u.birthday AS birthday,
+           ARRAY_AGG(DISTINCT f.friend_id) AS friends
+       FROM
+           users AS u
+           LEFT JOIN friends AS f ON u.id = f.user_id
+       WHERE
+           u.id = ?
+       GROUP BY
+           u.id;
     """;
 
     public static final String GET_SIMPLE_USER_QUERY = """

@@ -11,24 +11,24 @@ import aplication.model.UserEvent.OperationType;
 
 public class UserEventRowMapper implements RowMapper<UserEvent> {
     public static final String GET_FEEDS = """
-                SELECT
-                    id AS eventId,
-                    user_id AS userId,
-                    event_type AS eventType,
-                    operation AS operation,
-                    entity_id AS entityId,
-                    EXTRACT(
-                        EPOCH
-                        FROM
-                            timestamp
-                    ) AS timestamp
+        SELECT
+            id AS eventId,
+            user_id AS userId,
+            event_type AS eventType,
+            operation AS operation,
+            entity_id AS entityId,
+            EXTRACT(
+                EPOCH
                 FROM
-                    user_events
-                WHERE
-                    user_id = ?
-                ORDER BY
-                    timestamp DESC
-            """;
+                    timestamp
+            ) AS timestamp
+        FROM
+            user_events
+        WHERE
+            user_id = ?
+        ORDER BY
+            timestamp DESC
+    """;
 
     public static final String CREATE_QUERY = """
         INSERT INTO
@@ -42,13 +42,12 @@ public class UserEventRowMapper implements RowMapper<UserEvent> {
     @Override
     @SuppressWarnings("null")
     public UserEvent mapRow(ResultSet rs, int rowNum) throws SQLException {
-        var feed = new UserEvent(
+        return new UserEvent(
             rs.getLong("timestamp"),
             rs.getLong("userId"),
             EventType.valueOf(rs.getString("eventType")),
             OperationType.valueOf(rs.getString("operation")),
             rs.getLong("eventId"),
             rs.getLong("entityId"));
-        return feed;
     }
 }

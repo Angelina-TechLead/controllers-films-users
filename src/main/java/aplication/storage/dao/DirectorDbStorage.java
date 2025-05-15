@@ -17,18 +17,16 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class DirectorDbStorage {
     private final JdbcTemplate jdbcTemplate;
-    private final DirectorRowMapper directorRowMapper;
-    private final FilmRowMapper filmRowMapper;
 
     public List<Director> getAll() {
-        return jdbcTemplate.query(DirectorRowMapper.GET_ALL_QUERY, directorRowMapper);
+        return jdbcTemplate.query(DirectorRowMapper.GET_ALL_QUERY, new DirectorRowMapper());
     }
 
     public Director getById(int id) {
         try {
             return jdbcTemplate.queryForObject(
                     DirectorRowMapper.GET_BY_ID_QUERY,
-                    directorRowMapper,
+                    new DirectorRowMapper(),
                     id
             );
         } catch (EmptyResultDataAccessException e) {
@@ -73,7 +71,7 @@ public class DirectorDbStorage {
     public List<Film> getFilmsByDirector(int directorId) {
         return jdbcTemplate.query(
                 DirectorRowMapper.GET_FILMS_BY_DIRECTOR,
-                filmRowMapper,
+                new FilmRowMapper(),
                 directorId
         );
     }

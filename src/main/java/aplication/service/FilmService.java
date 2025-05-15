@@ -1,14 +1,12 @@
 package aplication.service;
 
 import aplication.exception.NotFoundException;
-import aplication.exception.ValidationException;
 import aplication.model.Film;
 import aplication.storage.FilmStorage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -42,10 +40,6 @@ public class FilmService {
 
     public void removeLike(long filmId, long userId) {
         filmStorage.removeLike(filmId, userId);
-    }
-
-    public List<Film> getPopular(Integer count) {
-        return filmStorage.getPopular(count);
     }
 
     public List<Film> getFilmsByDirector(int directorId, String sortBy) {

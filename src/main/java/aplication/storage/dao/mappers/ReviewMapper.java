@@ -1,12 +1,16 @@
-package aplication.storage.dao;
+package aplication.storage.dao.mappers;
 
 import aplication.model.Review;
+
+import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class ReviewMapper {
-    public static Review mapRow(ResultSet rs, int rowNum) throws SQLException {
+public class ReviewMapper implements RowMapper<Review>  {
+    @Override
+    @SuppressWarnings("null")
+    public Review mapRow(ResultSet rs, int rowNum) throws SQLException {
         return Review.builder()
                 .id(rs.getLong("review_id"))
                 .content(rs.getString("content"))
@@ -17,4 +21,3 @@ public class ReviewMapper {
                 .build();
     }
 }
-

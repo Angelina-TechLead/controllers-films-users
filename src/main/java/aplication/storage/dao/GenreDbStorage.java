@@ -2,6 +2,7 @@ package aplication.storage.dao;
 
 import aplication.exception.NotFoundException;
 import aplication.model.Genre;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -14,6 +15,7 @@ import java.util.List;
 @Primary
 @Component
 @Repository
+@RequiredArgsConstructor
 public class GenreDbStorage {
     private final JdbcTemplate jdbc;
 
@@ -23,10 +25,6 @@ public class GenreDbStorage {
         genre.setName(rs.getString("full_name"));
         return genre;
     };
-
-    public GenreDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbc = jdbcTemplate;
-    }
 
     public List<Genre> getAll() {
         String sql = "SELECT * FROM genres ORDER BY id ASC";

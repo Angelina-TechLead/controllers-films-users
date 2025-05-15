@@ -43,12 +43,16 @@ CREATE TABLE IF NOT EXISTS films (
 
 -- Индексы для фильмов
 CREATE INDEX IF NOT EXISTS idx_films_name_trgm ON films USING gin(film_name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_films_release_date ON films (release_date);
 
 -- Таблица режиссёров
 CREATE TABLE IF NOT EXISTS directors (
     id SERIAL PRIMARY KEY,
     director_name VARCHAR(50) NOT NULL
 );
+
+-- Индексы для режиссёров
+CREATE INDEX IF NOT EXISTS idx_directors_name_trgm ON directors USING gin(director_name gin_trgm_ops);
 
 -- Таблица связи фильмов и режиссёров
 CREATE TABLE IF NOT EXISTS film_directors (

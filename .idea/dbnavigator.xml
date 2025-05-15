@@ -53,8 +53,8 @@
     <retain-sticky-names value="false" />
   </component>
   <component name="DBNavigator.Project.FileConnectionMappingManager">
-    <mapping file-url="file://$PROJECT_DIR$/src/main/resources/schema.sql" connection-id="virtual-sqlite-connection" session-id="MAIN" current-schema="" />
     <mapping file-url="file://$PROJECT_DIR$/src/main/resources/data.sql" connection-id="80514322-bfe5-4dd0-a3ca-5092730ed2e2" session-id="MAIN" current-schema="catsgram" />
+    <mapping file-url="file://$PROJECT_DIR$/src/main/resources/schema.sql" connection-id="virtual-sqlite-connection" session-id="MAIN" current-schema="" />
   </component>
   <component name="DBNavigator.Project.ObjectQuickFilterManager">
     <last-used-operator value="EQUAL" />
@@ -69,26 +69,23 @@
     <connections>
       <connection id="80514322-bfe5-4dd0-a3ca-5092730ed2e2" active="true" signed="true">
         <database>
-          <name value="NAS" />
-          <description value="NAS" />
+          <name value="localhost" />
+          <description value="localhost" />
           <database-type value="POSTGRES" />
           <config-type value="BASIC" />
-          <database-version value="16.8" />
+          <database-version value="17.5" />
           <driver-source value="BUNDLED" />
           <driver-library value="" />
           <driver value="" />
           <url-type value="DATABASE" />
-          <host value="192.168.0.88" />
-          <port value="5441" />
-          <database value="catsgram" />
+          <host value="localhost" />
+          <port value="5432" />
+          <database value="filmorate_devlopment" />
           <tns-folder value="" />
           <tns-profile value="" />
           <type value="USER_PASSWORD" />
           <user value="postgres" />
-          <token-type value="" />
-          <token-config-file value="" />
-          <token-profile value="" />
-          <session-user value="" />
+          <deprecated-pwd value="cG9zdGdyZXM=" />
         </database>
         <properties>
           <auto-commit value="false" />
@@ -98,8 +95,10 @@
           <proxy-host value="" />
           <proxy-port value="22" />
           <proxy-user value="" />
+          <deprecated-proxy-pwd value="" />
           <auth-type value="PASSWORD" />
           <key-file value="" />
+          <key-passphrase value="" />
         </ssh-settings>
         <ssl-settings>
           <active value="false" />
@@ -156,15 +155,9 @@
             <object-type name="TYPE" enabled="true" />
             <object-type name="TYPE_ATTRIBUTE" enabled="true" />
             <object-type name="ARGUMENT" enabled="true" />
-            <object-type name="JAVA_CLASS" enabled="true" />
-            <object-type name="JAVA_INNER_CLASS" enabled="true" />
-            <object-type name="JAVA_FIELD" enabled="true" />
-            <object-type name="JAVA_METHOD" enabled="true" />
             <object-type name="DIMENSION" enabled="true" />
             <object-type name="CLUSTER" enabled="true" />
             <object-type name="DBLINK" enabled="true" />
-            <object-type name="CREDENTIAL" enabled="true" />
-            <object-type name="AI_PROFILE" enabled="true" />
           </object-type-filter>
         </object-filters>
       </connection>
@@ -200,15 +193,9 @@
           <object-type name="TYPE" enabled="true" />
           <object-type name="TYPE_ATTRIBUTE" enabled="true" />
           <object-type name="ARGUMENT" enabled="true" />
-          <object-type name="JAVA_CLASS" enabled="true" />
-          <object-type name="JAVA_INNER_CLASS" enabled="true" />
-          <object-type name="JAVA_FIELD" enabled="true" />
-          <object-type name="JAVA_METHOD" enabled="true" />
           <object-type name="DIMENSION" enabled="true" />
           <object-type name="CLUSTER" enabled="true" />
           <object-type name="DBLINK" enabled="true" />
-          <object-type name="CREDENTIAL" enabled="true" />
-          <object-type name="AI_PROFILE" enabled="true" />
         </object-type-filter>
       </filters>
       <sorting>
@@ -245,15 +232,9 @@
           <object-type name="FUNCTION" enabled="true" />
           <object-type name="PACKAGE" enabled="true" />
           <object-type name="TYPE" enabled="true" />
-          <object-type name="JAVA CLASS" enabled="true" />
-          <object-type name="INNER CLASS" enabled="true" />
-          <object-type name="JAVA FIELD" enabled="true" />
-          <object-type name="JAVA METHOD" enabled="true" />
-          <object-type name="JAVA PARAMETER" enabled="true" />
           <object-type name="DIMENSION" enabled="false" />
           <object-type name="CLUSTER" enabled="false" />
           <object-type name="DBLINK" enabled="true" />
-          <object-type name="CREDENTIAL" enabled="false" />
         </lookup-objects>
         <force-database-load value="false" />
         <prompt-connection-selection value="true" />
@@ -307,9 +288,11 @@
           <content-type name="DTD" enabled="true" />
           <content-type name="HTML" enabled="true" />
           <content-type name="XHTML" enabled="true" />
+          <content-type name="CSS" enabled="true" />
           <content-type name="Java" enabled="true" />
           <content-type name="SQL" enabled="true" />
           <content-type name="PL/SQL" enabled="true" />
+          <content-type name="JavaScript" enabled="true" />
           <content-type name="JSON" enabled="true" />
           <content-type name="JSON5" enabled="true" />
           <content-type name="Groovy" enabled="true" />
@@ -543,7 +526,6 @@
         <mapping file-type-id="TYPE" extensions="tpe" />
         <mapping file-type-id="TYPE_SPEC" extensions="tps" />
         <mapping file-type-id="TYPE_BODY" extensions="tpb" />
-        <mapping file-type-id="JAVA_SOURCE" extensions="sql" />
       </extensions>
       <general>
         <lookup-ddl-files value="true" />
@@ -553,11 +535,6 @@
         <make-scripts-rerunnable value="true" />
       </general>
     </ddl-file-settings>
-    <assistant-settings>
-      <credential-settings>
-        <credentials />
-      </credential-settings>
-    </assistant-settings>
     <general-settings>
       <regional-settings>
         <date-format value="MEDIUM" />

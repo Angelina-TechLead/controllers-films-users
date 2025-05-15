@@ -1,6 +1,5 @@
 package aplication.controller;
 
-import aplication.exception.NotFoundException;
 import aplication.model.Film;
 import aplication.model.User;
 import aplication.model.UserEvent;
@@ -100,8 +99,8 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public User deleteUserById(@PathVariable Long id) {
-        return userService.deleteUserById(id);
+    public void deleteUserById(@PathVariable Long id) {
+        userService.deleteUserById(id);
     }
 
     @GetMapping("{id}/recommendations")

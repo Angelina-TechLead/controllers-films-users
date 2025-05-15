@@ -7,6 +7,7 @@ import aplication.storage.UserStorage;
 
 import aplication.storage.dao.mappers.FilmRowMapper;
 import aplication.storage.dao.mappers.UserRowMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
@@ -26,13 +27,9 @@ import java.util.*;
 @Primary
 @Component
 @Repository
+@RequiredArgsConstructor
 public class UserDbStorage implements UserStorage {
     private final JdbcTemplate jdbc;
-
-    public UserDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbc = jdbcTemplate;
-    }
-
 
     @Override
     public User create(User user) {

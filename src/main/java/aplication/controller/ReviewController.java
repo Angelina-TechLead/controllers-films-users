@@ -1,7 +1,9 @@
 package aplication.controller;
 
 import aplication.model.Review;
+import aplication.model.UserEvent;
 import aplication.service.ReviewService;
+import aplication.service.UserEventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,24 +16,52 @@ import java.util.Collection;
 @RestController
 @RequestMapping("/reviews")
 public class ReviewController {
-
     private final ReviewService reviewService;
+    private final UserEventService userEventService;
 
     @PostMapping
     public ResponseEntity<Review> create(@Valid @RequestBody Review review) {
         var created = reviewService.create(review);
+
+        UserEvent event = new UserEvent();
+        event.setUserId(review.getUserId());
+        event.setEventType(UserEvent.EventType.REVIEW);
+        event.setOperation(UserEvent.OperationType.ADD);
+        event.setEntityId(review.getId());
+        event.setTimestamp(System.currentTimeMillis());
+        userEventService.create(event);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping
     public ResponseEntity<Review> update(@Valid @RequestBody Review review) {
         var updated = reviewService.update(review);
+
+        UserEvent event = new UserEvent();
+        event.setUserId(review.getUserId());
+        event.setEventType(UserEvent.EventType.REVIEW);
+        event.setOperation(UserEvent.OperationType.UPDATE);
+        event.setEntityId(review.getId());
+        event.setTimestamp(System.currentTimeMillis());
+        userEventService.create(event);
+
         return ResponseEntity.status(HttpStatus.OK).body(updated);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable long id) {
+        var review = reviewService.findById(id);
         reviewService.delete(id);
+
+        UserEvent event = new UserEvent();
+        event.setUserId(review.getUserId());
+        event.setEventType(UserEvent.EventType.REVIEW);
+        event.setOperation(UserEvent.OperationType.REMOVE);
+        event.setEntityId(review.getId());
+        event.setTimestamp(System.currentTimeMillis());
+        userEventService.create(event);
+
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
@@ -72,4 +102,3 @@ public class ReviewController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
-

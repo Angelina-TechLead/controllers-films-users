@@ -9,8 +9,7 @@ import aplication.service.UserEventService;
 import aplication.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,12 +27,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-    private static final Logger log = LoggerFactory.getLogger(FilmController.class);
-
     private final FilmService filmService;
     private final UserService userService;
     private final UserEventService userEventService;
@@ -163,7 +161,6 @@ public class FilmController {
                 ? ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
                 : ResponseEntity.status(HttpStatus.OK).body(films);
     }
-}
 
     @GetMapping("/common")
     public ResponseEntity<List<Film>> getCommonFilms(
