@@ -1,6 +1,5 @@
 package aplication.service;
 
-import aplication.exception.NotFoundException;
 import aplication.exception.ValidationException;
 import aplication.model.Director;
 import aplication.model.Film;

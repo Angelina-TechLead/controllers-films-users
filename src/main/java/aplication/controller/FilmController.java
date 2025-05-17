@@ -4,6 +4,7 @@ import aplication.model.Film;
 import aplication.model.UserEvent;
 import aplication.model.UserEvent.EventType;
 import aplication.model.UserEvent.OperationType;
+import aplication.service.DirectorService;
 import aplication.service.FilmService;
 import aplication.service.UserEventService;
 import aplication.service.UserService;
@@ -23,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +35,7 @@ public class FilmController {
     private final FilmService filmService;
     private final UserService userService;
     private final UserEventService userEventService;
+    private final DirectorService directorService;
 
     @GetMapping
     public ResponseEntity<List<Film>> getFilms() {
@@ -54,10 +55,7 @@ public class FilmController {
     @GetMapping("/popular")
     public ResponseEntity<List<Film>> popular(@RequestParam Map<String, Object> params) {
         List<Film> films = filmService.search(params);
-
-        return films.isEmpty()
-                ? ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
-                : ResponseEntity.ok(films);
+        return ResponseEntity.ok(films);
     }
 
     @PostMapping
@@ -88,6 +86,7 @@ public class FilmController {
     public List<Film> getFilmsByDirector(
             @PathVariable int directorId,
             @RequestParam(required = false, defaultValue = "year") String sortBy) {
+        directorService.getById(directorId);
         return filmService.getFilmsByDirector(directorId, sortBy);
     }
 
@@ -166,15 +165,7 @@ public class FilmController {
     public ResponseEntity<List<Film>> getCommonFilms(
             @RequestParam long userId,
             @RequestParam long friendId) {
-        log.info("Fetching common films for user {} and friend {}", userId, friendId);
-
         List<Film> commonFilms = filmService.getCommonFilms(userId, friendId);
-
-        if (commonFilms.isEmpty()) {
-            log.info("No common films found for user {} and friend {}", userId, friendId);
-            return ResponseEntity.ok(Collections.emptyList());
-        }
-
         return ResponseEntity.ok(commonFilms);
     }
 }

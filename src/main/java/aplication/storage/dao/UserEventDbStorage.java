@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.util.List;
 import java.util.Objects;
 
+import aplication.storage.dao.queries.UserEventQueryConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -29,7 +30,7 @@ public class UserEventDbStorage implements UserEventStorage {
 
     @Override
     public List<UserEvent> getRecentEvents(int userId) {
-        return jdbc.query(UserEventRowMapper.GET_FEEDS, new UserEventRowMapper(), userId);
+        return jdbc.query(UserEventQueryConstants.GET_FEEDS, new UserEventRowMapper(), userId);
     }
 
     @Override
@@ -39,7 +40,7 @@ public class UserEventDbStorage implements UserEventStorage {
         try {
             jdbc.update(conn -> {
                 PreparedStatement ps = conn.prepareStatement(
-                        UserEventRowMapper.CREATE_QUERY,
+                        UserEventQueryConstants.CREATE_QUERY,
                         new String[] { "id" });
                 ps.setLong(1, userEvent.getUserId());
                 ps.setString(2, userEvent.getEventType().name());

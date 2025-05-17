@@ -5,6 +5,7 @@ import aplication.model.Director;
 import aplication.model.Film;
 import aplication.storage.dao.mappers.DirectorRowMapper;
 import aplication.storage.dao.mappers.FilmRowMapper;
+import aplication.storage.dao.queries.DirectorQueryConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,13 +20,13 @@ public class DirectorDbStorage {
     private final JdbcTemplate jdbcTemplate;
 
     public List<Director> getAll() {
-        return jdbcTemplate.query(DirectorRowMapper.GET_ALL_QUERY, new DirectorRowMapper());
+        return jdbcTemplate.query(DirectorQueryConstants.GET_ALL_QUERY, new DirectorRowMapper());
     }
 
     public Director getById(int id) {
         try {
             return jdbcTemplate.queryForObject(
-                    DirectorRowMapper.GET_BY_ID_QUERY,
+                    DirectorQueryConstants.GET_BY_ID_QUERY,
                     new DirectorRowMapper(),
                     id
             );
@@ -38,7 +39,7 @@ public class DirectorDbStorage {
         var keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(conn -> {
             var ps = conn.prepareStatement(
-                    DirectorRowMapper.CREATE_QUERY,
+                    DirectorQueryConstants.CREATE_QUERY,
                     new String[]{"id"}
             );
             ps.setString(1, director.getName());
@@ -51,7 +52,7 @@ public class DirectorDbStorage {
 
     public Director update(Director director) {
         int updated = jdbcTemplate.update(
-                DirectorRowMapper.UPDATE_QUERY,
+                DirectorQueryConstants.UPDATE_QUERY,
                 director.getName(),
                 director.getId()
         );
@@ -62,7 +63,7 @@ public class DirectorDbStorage {
     }
 
     public void delete(int id) {
-        int deleted = jdbcTemplate.update(DirectorRowMapper.DELETE_QUERY, id);
+        int deleted = jdbcTemplate.update(DirectorQueryConstants.DELETE_QUERY, id);
         if (deleted == 0) {
             throw new NotFoundException("Director not found");
         }
@@ -70,7 +71,7 @@ public class DirectorDbStorage {
 
     public List<Film> getFilmsByDirector(int directorId) {
         return jdbcTemplate.query(
-                DirectorRowMapper.GET_FILMS_BY_DIRECTOR,
+                DirectorQueryConstants.GET_FILMS_BY_DIRECTOR,
                 new FilmRowMapper(),
                 directorId
         );

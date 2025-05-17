@@ -5,15 +5,13 @@ import aplication.exception.ValidationException;
 import aplication.model.Film;
 import aplication.storage.FilmStorage;
 import aplication.storage.dao.mappers.FilmRowMapper;
-import aplication.storage.dao.mappers.LikeRowMapper;
-import aplication.storage.dao.queries.FilmQueryBuilder;
+import aplication.storage.dao.queries.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -24,10 +22,10 @@ import org.springframework.stereotype.Repository;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Types;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static aplication.storage.dao.mappers.FilmRowMapper.GET_COMMON_FILMS_QUERY;
 
 @Slf4j
 @Primary
@@ -43,7 +41,7 @@ public class FilmDbStorage implements FilmStorage {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         try {
             jdbc.update(conn -> {
-                PreparedStatement ps = conn.prepareStatement(FilmRowMapper.CREATE_FILM_QUERY, new String[]{"id"});
+                PreparedStatement ps = conn.prepareStatement(FilmQueryConstants.CREATE_FILM_QUERY, new String[]{"id"});
                 ps.setString(1, film.getName());
                 ps.setString(2, film.getDescription());
 
@@ -74,7 +72,7 @@ public class FilmDbStorage implements FilmStorage {
         }
         film.setId(Objects.requireNonNull(keyHolder.getKey()).longValue());
         try {
-            jdbc.batchUpdate(FilmRowMapper.ADD_FILM_GENRE_QUERY, film.getGenres(), film.getGenres().size(),
+            jdbc.batchUpdate(FilmQueryConstants.ADD_FILM_GENRE_QUERY, film.getGenres(), film.getGenres().size(),
                     (ps, genre) -> {
                         ps.setLong(1, film.getId());
                         ps.setInt(2, genre.getId());
@@ -85,7 +83,7 @@ public class FilmDbStorage implements FilmStorage {
 
         if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
             try {
-                jdbc.batchUpdate(FilmRowMapper.ADD_FILM_DIRECTOR_QUERY,
+                jdbc.batchUpdate(FilmQueryConstants.ADD_FILM_DIRECTOR_QUERY,
                         film.getDirectors().stream()
                                 .map(director -> new Object[]{film.getId(), director.getId()})
                                 .collect(Collectors.toList()));
@@ -103,40 +101,35 @@ public class FilmDbStorage implements FilmStorage {
         var updateRating = film.getMpa().getId();
 
         try {
-            jdbc.update(FilmRowMapper.UPDATE_FILM_QUERY,
+            jdbc.update(FilmQueryConstants.UPDATE_FILM_QUERY,
                     film.getName(), film.getDescription(), film.getReleaseDate(), updateDuration, updateRating,
                     film.getId());
         } catch (DuplicateKeyException e) {
             throw new ValidationException("Не удалось обновить фильм");
         } catch (DataIntegrityViolationException e) {
             throw new NotFoundException("Не удалось обновить фильм");
-        } catch (BadSqlGrammarException e) {
-            log.error("Ошибка SQL", e);
         }
+
         try {
-            jdbc.update(FilmRowMapper.REMOVE_FILM_GENRES_QUERY, film.getId());
-            jdbc.batchUpdate(FilmRowMapper.ADD_FILM_GENRE_QUERY, film.getGenres(), film.getGenres().size(),
+            jdbc.update(FilmQueryConstants.REMOVE_FILM_GENRES_QUERY, film.getId());
+            jdbc.batchUpdate(FilmQueryConstants.ADD_FILM_GENRE_QUERY, film.getGenres(), film.getGenres().size(),
                     (ps, genre) -> {
                         ps.setLong(1, film.getId());
                         ps.setInt(2, genre.getId());
                     });
         } catch (DataIntegrityViolationException e) {
             throw new NotFoundException("Не обновить жанры");
-        } catch (BadSqlGrammarException e) {
-            log.error("Ошибка SQL", e);
         }
 
-        jdbc.update(FilmRowMapper.REMOVE_FILM_DIRECTOR_QUERY, film.getId());
+        jdbc.update(FilmQueryConstants.REMOVE_FILM_DIRECTOR_QUERY, film.getId());
         if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
             try {
-                jdbc.batchUpdate(FilmRowMapper.ADD_FILM_DIRECTOR_QUERY,
+                jdbc.batchUpdate(FilmQueryConstants.ADD_FILM_DIRECTOR_QUERY,
                         film.getDirectors().stream()
                                 .map(director -> new Object[]{film.getId(), director.getId()})
                                 .collect(Collectors.toList()));
             } catch (DataIntegrityViolationException e) {
                 throw new NotFoundException("Такой режиссер не найден");
-            } catch (BadSqlGrammarException e) {
-                log.error("Ошибка SQL", e);
             }
         }
         return getById(film.getId());
@@ -144,23 +137,23 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public void delete(long id) {
-        jdbc.update(FilmRowMapper.DELETE_FILM_BY_ID_QUERY, id);
+        jdbc.update(FilmQueryConstants.DELETE_FILM_BY_ID_QUERY, id);
     }
 
     @Override
     public void addLike(long filmId, long userId) {
-        jdbc.update(LikeRowMapper.ADD_QUERY, filmId, userId);
+        jdbc.update(LikeQueryConstants.ADD_QUERY, filmId, userId);
     }
 
     @Override
     public void removeLike(long filmId, long userId) {
-        jdbc.update(LikeRowMapper.DELETE_QUERY, filmId, userId);
+        jdbc.update(LikeQueryConstants.DELETE_QUERY, filmId, userId);
     }
 
     @Override
     public Film getById(long id) {
         try {
-            return jdbc.queryForObject(FilmRowMapper.GET_FILM_BY_ID_QUERY, new FilmRowMapper(), id);
+            return jdbc.queryForObject(FilmQueryConstants.GET_FILM_BY_ID_QUERY, new FilmRowMapper(), id);
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException("Пользователь с ID " + id + " не найден");
         }
@@ -169,7 +162,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public void existsById(Long id) {
         try {
-            jdbc.queryForObject(FilmRowMapper.GET_SIMPLE_FILM_QUERY, new FilmRowMapper(), id);
+            jdbc.queryForObject(FilmQueryConstants.GET_SIMPLE_FILM_QUERY, new FilmRowMapper(), id);
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException("Пользователь с ID " + id + " не найден");
         }
@@ -177,57 +170,39 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getAll() {
-        List<Film> films = new ArrayList<>();
-        try {
-            films = jdbc.query(FilmRowMapper.GET_FILMS_QUERY, new FilmRowMapper());
-            return films;
-        } catch (BadSqlGrammarException e) {
-            log.error("Ошибка при получении всех фильмов", e);
-            return films;
-        }
+        return jdbc.query(FilmQueryConstants.GET_FILMS_QUERY, new FilmRowMapper());
     }
 
     @Override
     public List<Film> findByFilters(Map<String, Object> filters) {
-        List<Film> films = new ArrayList<>();
-        try {
-            FilmQueryBuilder queryBuilder = new FilmQueryBuilder().addFilters(filters);
+        FilmQueryBuilder queryBuilder = new FilmQueryBuilder().addFilters(filters);
 
-            var sql = queryBuilder.buildQuery();
-            var params = queryBuilder.getParameters();
+        var sql = queryBuilder.buildQuery();
+        var params = queryBuilder.getParameters();
 
-            films = namedParameterJdbcTemplate.query(sql, params, new FilmRowMapper());
-            return films;
-        } catch (BadSqlGrammarException e) {
-            log.error("Ошибка при получении всех фильмов", e);
-            return films;
-        }
+        return namedParameterJdbcTemplate.query(sql, params, new FilmRowMapper());
     }
 
     public List<Film> getFilmsByDirector(int directorId, String sortBy) {
         String query = switch (sortBy.toLowerCase()) {
-            case "likes" -> FilmRowMapper.GET_DIRECTOR_FILMS_SORTED_BY_LIKES;
-            case "year" -> FilmRowMapper.GET_DIRECTOR_FILMS_SORTED_BY_YEAR;
+            case "likes" -> FilmQueryConstants.GET_DIRECTOR_FILMS_SORTED_BY_LIKES;
+            case "year" -> FilmQueryConstants.GET_DIRECTOR_FILMS_SORTED_BY_YEAR;
             default -> throw new ValidationException("Параметр sortBy может быть только 'year' или 'likes'");
         };
 
-        try {
-            return jdbc.query(query, new FilmRowMapper(), directorId);
-        } catch (EmptyResultDataAccessException e) {
-            throw new NotFoundException("Режиссер с ID " + directorId + " не найден или у него нет фильмов");
-        }
+        return jdbc.query(query, new FilmRowMapper(), directorId);
     }
 
     public void addDirector(long filmId, int directorId) {
-        jdbc.update(FilmRowMapper.ADD_FILM_DIRECTOR_QUERY, filmId, directorId);
+        jdbc.update(FilmQueryConstants.ADD_FILM_DIRECTOR_QUERY, filmId, directorId);
     }
 
     public void removeDirectors(long filmId) {
-        jdbc.update(FilmRowMapper.REMOVE_FILM_DIRECTOR_QUERY, filmId);
+        jdbc.update(FilmQueryConstants.REMOVE_FILM_DIRECTOR_QUERY, filmId);
     }
 
     @Override
     public List<Film> getCommonFilms(long userId, long friendId) {
-        return jdbc.query(GET_COMMON_FILMS_QUERY, new FilmRowMapper(), userId, friendId);
+        return jdbc.query(FilmQueryConstants.GET_COMMON_FILMS_QUERY, new FilmRowMapper(), userId, friendId);
     }
 }

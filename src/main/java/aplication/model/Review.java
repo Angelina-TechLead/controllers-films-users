@@ -27,4 +27,3 @@ public class Review {
 
     private int useful;
 }
-
