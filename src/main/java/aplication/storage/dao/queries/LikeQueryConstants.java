@@ -1,6 +1,6 @@
-package aplication.storage.dao.mappers;
+package aplication.storage.dao.queries;
 
-public class LikeRowMapper {
+public class LikeQueryConstants {
     public static final String ADD_QUERY  = """
         INSERT INTO
             likes (film_id, user_id)

@@ -5,8 +5,9 @@ import aplication.exception.ValidationException;
 import aplication.model.User;
 import aplication.storage.UserStorage;
 
-import aplication.storage.dao.mappers.FilmRowMapper;
 import aplication.storage.dao.mappers.UserRowMapper;
+import aplication.storage.dao.queries.FilmQueryConstants;
+import aplication.storage.dao.queries.UserQueryConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -22,7 +23,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Types;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Collection;
 
 @Primary
 @Component
@@ -36,7 +41,7 @@ public class UserDbStorage implements UserStorage {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         try {
             jdbc.update(conn -> {
-                PreparedStatement ps = conn.prepareStatement(UserRowMapper.CREATE_USER_QUERY, new String[]{"id"});
+                PreparedStatement ps = conn.prepareStatement(UserQueryConstants.CREATE_USER_QUERY, new String[]{"id"});
                 ps.setString(1, user.getEmail());
                 ps.setString(2, user.getLogin());
                 ps.setString(3, user.getName());
@@ -60,7 +65,7 @@ public class UserDbStorage implements UserStorage {
     @Transactional
     public User update(User user) {
         try {
-            jdbc.update(UserRowMapper.UPDATE_USER_QUERY, user.getEmail(), user.getLogin(), user.getName(), user.getBirthday(), user.getId());
+            jdbc.update(UserQueryConstants.UPDATE_USER_QUERY, user.getEmail(), user.getLogin(), user.getName(), user.getBirthday(), user.getId());
         } catch (DuplicateKeyException e) {
             throw new ValidationException("Ошибка при обновлении пользователя");
         } catch (DataIntegrityViolationException e) {
@@ -72,14 +77,14 @@ public class UserDbStorage implements UserStorage {
     @Override
     @Transactional
     public User delete(User user) {
-        jdbc.update(UserRowMapper.DELETE_USER_BY_ID_QUERY, user.getId());
+        jdbc.update(UserQueryConstants.DELETE_USER_BY_ID_QUERY, user.getId());
         return user;
     }
 
     @Override
     public User getById(long id) {
         try {
-            return jdbc.queryForObject(UserRowMapper.GET_USER_BY_ID_QUERY, new UserRowMapper(), id);
+            return jdbc.queryForObject(UserQueryConstants.GET_USER_BY_ID_QUERY, new UserRowMapper(), id);
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException("Пользователь с ID " + id + " не найден");
         }
@@ -87,18 +92,18 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> getAll() {
-        return jdbc.query(UserRowMapper.GET_USERS_QUERY, new UserRowMapper());
+        return jdbc.query(UserQueryConstants.GET_USERS_QUERY, new UserRowMapper());
     }
 
     @Override
     public Set<User> getFriends(long userId) {
-        return new HashSet<>(jdbc.query(UserRowMapper.GET_USER_FRIENDS, new UserRowMapper(), userId));
+        return new HashSet<>(jdbc.query(UserQueryConstants.GET_USER_FRIENDS, new UserRowMapper(), userId));
     }
 
     @Override
     public void existsById(Long id) {
         try {
-            jdbc.queryForObject(UserRowMapper.GET_SIMPLE_USER_QUERY, new UserRowMapper(), id);
+            jdbc.queryForObject(UserQueryConstants.GET_SIMPLE_USER_QUERY, new UserRowMapper(), id);
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException("Пользователь с ID " + id + " не найден");
         }
@@ -109,7 +114,7 @@ public class UserDbStorage implements UserStorage {
         existsById(fromId);
         existsById(toId);
         try {
-            jdbc.update(UserRowMapper.ADD_FRIEND_QUERY, fromId, toId);
+            jdbc.update(UserQueryConstants.ADD_FRIEND_QUERY, fromId, toId);
         } catch (DuplicateKeyException e) {
             throw new NotFoundException("Невозможно добавить дружбу между пользователями с ID " + fromId + " и " + toId);
         }
@@ -119,12 +124,12 @@ public class UserDbStorage implements UserStorage {
     public void removeFriend(long userId, long friendId) {
         existsById(userId);
         existsById(friendId);
-        jdbc.update(UserRowMapper.REMOVE_FRIEND_QUERY, userId, friendId);
+        jdbc.update(UserQueryConstants.REMOVE_FRIEND_QUERY, userId, friendId);
     }
 
     @Override
     public Collection<Long> getRecommendations(Long id, Integer count) {
-        return jdbc.query(FilmRowMapper.RECOMMENDATIONS_QUERY,
+        return jdbc.query(FilmQueryConstants.RECOMMENDATIONS_QUERY,
                 (rs, rowNum) -> rs.getLong("film_id"), id, id, count);
     }
 }
