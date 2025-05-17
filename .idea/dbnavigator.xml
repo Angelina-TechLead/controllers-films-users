@@ -9,6 +9,19 @@
     <value-preview-text-wrapping value="false" />
     <value-preview-pinned value="false" />
   </component>
+  <component name="DBNavigator.Project.DatabaseAssistantManager">
+    <assistants>
+      <assistant-state connection-id="80514322-bfe5-4dd0-a3ca-5092730ed2e2" default-profile-name="" selected-profile-name="" selected-model-name="" assistant-type="GENERIC" selected-action="SHOW_SQL" availability="UNAVAILABLE" acknowledgement="NONE">
+        <messages />
+      </assistant-state>
+      <assistant-state connection-id="virtual-sqlite-connection" default-profile-name="" selected-profile-name="" selected-model-name="" assistant-type="GENERIC" selected-action="SHOW_SQL" availability="UNAVAILABLE" acknowledgement="NONE">
+        <messages />
+      </assistant-state>
+      <assistant-state connection-id="virtual-mysql-connection" default-profile-name="" selected-profile-name="" selected-model-name="" assistant-type="GENERIC" selected-action="SHOW_SQL" availability="UNAVAILABLE" acknowledgement="NONE">
+        <messages />
+      </assistant-state>
+    </assistants>
+  </component>
   <component name="DBNavigator.Project.DatabaseBrowserManager">
     <autoscroll-to-editor value="false" />
     <autoscroll-from-editor value="true" />
@@ -17,7 +30,7 @@
   </component>
   <component name="DBNavigator.Project.DatabaseConsoleManager">
     <connection id="80514322-bfe5-4dd0-a3ca-5092730ed2e2">
-      <console name="NAS" type="STANDARD" schema="" session="Main" />
+      <console name="NAS" type="STANDARD" schema="catsgram" session="Main" />
     </connection>
   </component>
   <component name="DBNavigator.Project.DatabaseEditorStateManager">
@@ -41,7 +54,7 @@
   </component>
   <component name="DBNavigator.Project.FileConnectionMappingManager">
     <mapping file-url="file://$PROJECT_DIR$/src/main/resources/data.sql" connection-id="80514322-bfe5-4dd0-a3ca-5092730ed2e2" session-id="MAIN" current-schema="catsgram" />
-    <mapping file-url="file://$PROJECT_DIR$/src/main/resources/schema.sql" connection-id="80514322-bfe5-4dd0-a3ca-5092730ed2e2" session-id="MAIN" current-schema="public" />
+    <mapping file-url="file://$PROJECT_DIR$/src/main/resources/schema.sql" connection-id="virtual-sqlite-connection" session-id="MAIN" current-schema="" />
   </component>
   <component name="DBNavigator.Project.ObjectQuickFilterManager">
     <last-used-operator value="EQUAL" />
@@ -56,18 +69,18 @@
     <connections>
       <connection id="80514322-bfe5-4dd0-a3ca-5092730ed2e2" active="true" signed="true">
         <database>
-          <name value="NAS" />
-          <description value="NAS" />
+          <name value="localhost" />
+          <description value="localhost" />
           <database-type value="POSTGRES" />
           <config-type value="BASIC" />
-          <database-version value="16.8" />
+          <database-version value="17.5" />
           <driver-source value="BUNDLED" />
           <driver-library value="" />
           <driver value="" />
           <url-type value="DATABASE" />
-          <host value="192.168.0.88" />
-          <port value="5441" />
-          <database value="catsgram" />
+          <host value="localhost" />
+          <port value="5432" />
+          <database value="filmorate_devlopment" />
           <tns-folder value="" />
           <tns-profile value="" />
           <type value="USER_PASSWORD" />

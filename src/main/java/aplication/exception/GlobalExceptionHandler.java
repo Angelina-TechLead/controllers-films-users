@@ -41,4 +41,9 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
+
+    @ExceptionHandler(ReviewAlreadyExistsException.class)
+    public ResponseEntity<String> handleReviewAlreadyExistsException(ReviewAlreadyExistsException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+    }
 }

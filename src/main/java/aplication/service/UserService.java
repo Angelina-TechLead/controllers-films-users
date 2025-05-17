@@ -1,21 +1,27 @@
 package aplication.service;
 
 import aplication.exception.NotFoundException;
+import aplication.model.Film;
 import aplication.model.User;
+import aplication.storage.FilmStorage;
 import aplication.storage.UserStorage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class UserService {
     private final UserStorage userStorage;
+    private final FilmStorage filmStorage;
 
     @Autowired
-    public UserService(UserStorage userStorage) {
+    public UserService(UserStorage userStorage, FilmStorage filmStorage) {
         this.userStorage = userStorage;
+        this.filmStorage = filmStorage;
     }
 
     public List<User> getAll() {
@@ -38,8 +44,14 @@ public class UserService {
         return userStorage.update(u);
     }
 
+    public void deleteUserById(Long id) {
+        if (id == null) throw new IllegalArgumentException("User id не может быть null");
+        var user = getById(id);
+        userStorage.delete(user);
+    }
+
     public void removeFriend(long userId, long friendId) {
-      userStorage.removeFriend(userId, friendId);
+        userStorage.removeFriend(userId, friendId);
     }
 
     public Set<User> getCommonFriends(long userId, long friendId) {
@@ -76,11 +88,10 @@ public class UserService {
             return userStorage.getFriends(userId);
         }
     }
-
-    public User deleteUserById(Long id) {
-        if (id == null) throw new IllegalArgumentException("User id не может быть null");
-        var user = getById(id);
-        return userStorage.delete(user);
+  
+    public Collection<Film> getRecommendations(Long id, Integer count) {
+        return userStorage.getRecommendations(id, count).stream()
+                .map(filmStorage::getById)
+                .collect(Collectors.toList());
     }
 }
-
