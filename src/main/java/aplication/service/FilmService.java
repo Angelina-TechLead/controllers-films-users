@@ -3,20 +3,16 @@ package aplication.service;
 import aplication.exception.NotFoundException;
 import aplication.model.Film;
 import aplication.storage.FilmStorage;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class FilmService {
     private final FilmStorage filmStorage;
-
-    @Autowired
-    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage) {
-        this.filmStorage = filmStorage;
-    }
 
     public Film add(Film film) {
         return filmStorage.create(film);
@@ -41,8 +37,10 @@ public class FilmService {
         filmStorage.removeLike(filmId, userId);
     }
 
-    public List<Film> getPopular(Integer count) {
-        return filmStorage.getPopular(count);
+    public List<Film> getFilmsByDirector(int directorId, String sortBy) {
+        if (sortBy == null) sortBy = "year";
+
+        return filmStorage.getFilmsByDirector(directorId, sortBy);
     }
 
     public Film getById(long filmId) {
@@ -52,4 +50,13 @@ public class FilmService {
     public List<Film> getAll() {
         return filmStorage.getAll();
     }
+
+    public List<Film> search(Map<String, Object> filters) {
+        return filmStorage.findByFilters(filters);
+    }
+  
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        return filmStorage.getCommonFilms(userId, friendId);
+    }
 }
+  

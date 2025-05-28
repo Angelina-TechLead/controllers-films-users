@@ -2,6 +2,7 @@ package aplication.storage.dao;
 
 import aplication.exception.NotFoundException;
 import aplication.model.Mpa;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -14,12 +15,9 @@ import java.util.List;
 @Primary
 @Component
 @Repository
+@RequiredArgsConstructor
 public class MpaDbStorage {
     private final JdbcTemplate jdbc;
-
-    public MpaDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbc = jdbcTemplate;
-    }
 
     public List<Mpa> getAll() {
         String sql = "SELECT * FROM mpa_ratings ORDER BY id ASC";

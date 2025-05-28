@@ -2,6 +2,7 @@ package aplication.storage;
 
 import aplication.model.User;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -18,5 +19,6 @@ public interface UserStorage {
     void existsById(Long id);
     void addFriend(Long fromId, Long toId);
     void removeFriend(long userId, long friendId);
-}
 
+    Collection<Long> getRecommendations(Long id, Integer count);
+}

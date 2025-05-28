@@ -34,4 +34,3 @@ public class User {
 
     private Set<Long> friends = new HashSet<>();
 }
-

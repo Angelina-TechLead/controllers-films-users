@@ -1,7 +1,11 @@
 package aplication.controller;
 
-import aplication.exception.NotFoundException;
+import aplication.model.Film;
 import aplication.model.User;
+import aplication.model.UserEvent;
+import aplication.model.UserEvent.EventType;
+import aplication.model.UserEvent.OperationType;
+import aplication.service.UserEventService;
 import aplication.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +18,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -22,6 +27,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/users")
 public class UserController {
     private final UserService userService;
+    private final UserEventService userEventService;
 
     @GetMapping
     public List<User> getAll() {
@@ -60,21 +66,50 @@ public class UserController {
         return userService.update(user);
     }
 
+    @DeleteMapping("/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable long userId) {
+        userService.deleteUserById(userId);
+    }
+
     @PutMapping("/{id}/friends/{friendId}")
     public User[] addFriend(@PathVariable long id, @PathVariable long friendId) {
         userService.addFriend(id, friendId);
         var user = userService.getById(id);
-        return new User[]{ user };
+
+        UserEvent event = new UserEvent();
+        event.setUserId(friendId);
+        event.setEventType(EventType.FRIEND);
+        event.setOperation(OperationType.ADD);
+        event.setEntityId(id);
+        event.setTimestamp(System.currentTimeMillis());
+        userEventService.create(event);
+        
+        return new User[] { user };
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeFriend(@PathVariable long id, @PathVariable long friendId) {
         userService.removeFriend(id, friendId);
+
+        UserEvent event = new UserEvent();
+        event.setUserId(friendId);
+        event.setEventType(EventType.FRIEND);
+        event.setOperation(OperationType.REMOVE);
+        event.setEntityId(id);
+        event.setTimestamp(System.currentTimeMillis());
+        userEventService.create(event);
     }
 
     @DeleteMapping("/{id}")
-    public User deleteUserById(@PathVariable Long id) {
-        return userService.deleteUserById(id);
+    public void deleteUserById(@PathVariable Long id) {
+        userService.deleteUserById(id);
+    }
+
+    @GetMapping("{id}/recommendations")
+    public Collection<Film> getRecommendations(@PathVariable Long id,
+                                               @RequestParam(required = false, defaultValue = "10") Integer count) {
+        return userService.getRecommendations(id, count);
     }
 }
